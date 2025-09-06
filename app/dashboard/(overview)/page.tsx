@@ -1,12 +1,13 @@
 import PharmaciesTable from '@/app/ui/pharmacies/table';
 import PermissionError from '@/app/ui/permission-error';
+import ConnectionTest from '@/app/ui/connection-test';
 import { lusitana } from '@/app/ui/fonts';
 import { Suspense } from 'react';
-import { fetchPendingPharmacies } from '@/app/lib/data';
+import { fetchPendingPharmaciesAction } from '@/app/lib/actions';
 import { PharmaciesTableSkeleton } from '@/app/ui/skeletons';
  
 export default async function Page() {
-  const pharmaciesData = await fetchPendingPharmacies();
+  const pharmaciesData = await fetchPendingPharmaciesAction();
 
   // Check if there's an error
   if ('error' in pharmaciesData) {
@@ -15,6 +16,9 @@ export default async function Page() {
         <h1 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>
           Dashboard
         </h1>
+        <div className="mb-6">
+          <ConnectionTest />
+        </div>
         <PermissionError errorType={pharmaciesData.error} />
       </main>
     );

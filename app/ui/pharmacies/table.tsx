@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Pharmacy } from '@/app/lib/data';
+import { Pharmacy } from '@/app/lib/actions';
 import { EyeIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { approvePharmacy, rejectPharmacy } from '@/app/lib/actions';
 import PharmacyFilesModal from './files-modal';

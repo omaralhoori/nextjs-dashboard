@@ -36,6 +36,26 @@ export interface PharmacyFilesResponse {
   totalFiles: number;
 }
 
+// Types for pharmacy data
+export interface Pharmacy {
+  id: string;
+  pharmacy_name: string;
+  district: string;
+  phone: string;
+  status: string;
+  hasUploadedDocuments: boolean;
+  documentUploadDate: string | null;
+  adminNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PharmaciesResponse {
+  message: string;
+  pharmacies: Pharmacy[];
+  total: number;
+}
+
 export async function authenticate(
     prevState: string | undefined,
     formData: FormData,
@@ -148,7 +168,7 @@ export async function createInvoice(prevState: State, formData: FormData) {
       }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/pharmacies/${pharmacyId}/approve`, {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${session.user.accessToken}`,
           'Content-Type': 'application/json',
@@ -175,7 +195,7 @@ export async function createInvoice(prevState: State, formData: FormData) {
       }
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/pharmacies/${pharmacyId}/reject`, {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${session.user.accessToken}`,
           'Content-Type': 'application/json',
@@ -230,36 +250,93 @@ export async function createInvoice(prevState: State, formData: FormData) {
     }
   }
 
-  export async function downloadPharmacyFileAction(fileId: string) {
-    try {
-      const session = await auth();
-      if (!session?.user?.accessToken) {
-        return { error: 'UNAUTHORIZED' };
-      }
+export async function downloadPharmacyFileAction(fileId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.accessToken) {
+      return { error: 'UNAUTHORIZED' };
+    }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/pharmacy-files/download/${fileId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session.user.accessToken}`,
-        },
-      });
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/pharmacy-files/download/${fileId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.user.accessToken}`,
+      },
+    });
 
-      if (response.status === 401) {
-        return { error: 'UNAUTHORIZED' };
-      }
+    if (response.status === 401) {
+      return { error: 'UNAUTHORIZED' };
+    }
 
-      if (response.status === 403) {
-        return { error: 'PERMISSION_DENIED' };
-      }
+    if (response.status === 403) {
+      return { error: 'PERMISSION_DENIED' };
+    }
 
-      if (!response.ok) {
-        return { error: 'NETWORK_ERROR' };
-      }
-
-      const blob = await response.blob();
-      return { success: true, blob };
-    } catch (error) {
-      console.error('API Error:', error);
+    if (!response.ok) {
       return { error: 'NETWORK_ERROR' };
     }
+
+    const blob = await response.blob();
+    return { success: true, blob };
+  } catch (error) {
+    console.error('API Error:', error);
+    return { error: 'NETWORK_ERROR' };
   }
+}
+
+export async function fetchPendingPharmaciesAction(): Promise<PharmaciesResponse | { error: 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR' }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.accessToken) {
+      console.log('No access token available');
+      return { error: 'UNAUTHORIZED' };
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      console.error('NEXT_PUBLIC_API_URL environment variable is not set');
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const url = `${apiUrl}/admin/pharmacies?status=Pending&limit=5`;
+    console.log('Fetching from URL:', url);
+    console.log('Using access token:', session.user.accessToken.substring(0, 20) + '...');
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.user.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+
+    if (response.status === 401) {
+      console.log('Unauthorized - token may be expired');
+      return { error: 'UNAUTHORIZED' };
+    }
+
+    if (response.status === 403) {
+      console.log('Permission denied');
+      return { error: 'PERMISSION_DENIED' };
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', response.status, errorText);
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const data: PharmaciesResponse = await response.json();
+    console.log('Successfully fetched pharmacies:', data.pharmacies.length);
+    return data;
+  } catch (error) {
+    console.error('API Error Details:', error);
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error('Network error - check if API server is running and accessible');
+    }
+    return { error: 'NETWORK_ERROR' };
+  }
+}

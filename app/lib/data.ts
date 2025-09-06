@@ -239,38 +239,4 @@ export async function fetchFilteredCustomers(query: string) {
   }
 }
 
-export async function fetchPendingPharmacies(): Promise<PharmaciesResponse | { error: 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR' }> {
-  try {
-    const session = await auth();
-    if (!session?.user?.accessToken) {
-      return { error: 'UNAUTHORIZED' };
-    }
-
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/pharmacies?status=Pending&limit=5`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${session.user.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.status === 401) {
-      return { error: 'UNAUTHORIZED' };
-    }
-
-    if (response.status === 403) {
-      return { error: 'PERMISSION_DENIED' };
-    }
-
-    if (!response.ok) {
-      return { error: 'NETWORK_ERROR' };
-    }
-
-    const data: PharmaciesResponse = await response.json();
-    return data;
-  } catch (error) {
-    console.error('API Error:', error);
-    return { error: 'NETWORK_ERROR' };
-  }
-}
 
