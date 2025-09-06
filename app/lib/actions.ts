@@ -56,6 +56,20 @@ export interface PharmaciesResponse {
   total: number;
 }
 
+// Extended pharmacy interface for all pharmacies page
+export interface PharmacyWithUsers extends Pharmacy {
+  userCount: number;
+}
+
+export interface AllPharmaciesResponse {
+  message: string;
+  pharmacies: PharmacyWithUsers[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export async function authenticate(
     prevState: string | undefined,
     formData: FormData,
@@ -331,6 +345,62 @@ export async function fetchPendingPharmaciesAction(): Promise<PharmaciesResponse
 
     const data: PharmaciesResponse = await response.json();
     console.log('Successfully fetched pharmacies:', data.pharmacies.length);
+    return data;
+  } catch (error) {
+    console.error('API Error Details:', error);
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error('Network error - check if API server is running and accessible');
+    }
+    return { error: 'NETWORK_ERROR' };
+  }
+}
+
+export async function fetchAllPharmaciesAction(page: number = 1, limit: number = 20): Promise<AllPharmaciesResponse | { error: 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR' }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.accessToken) {
+      console.log('No access token available');
+      return { error: 'UNAUTHORIZED' };
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      console.error('NEXT_PUBLIC_API_URL environment variable is not set');
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const url = `${apiUrl}/admin/pharmacies?page=${page}&limit=${limit}`;
+    console.log('Fetching all pharmacies from URL:', url);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.user.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+
+    if (response.status === 401) {
+      console.log('Unauthorized - token may be expired');
+      return { error: 'UNAUTHORIZED' };
+    }
+
+    if (response.status === 403) {
+      console.log('Permission denied');
+      return { error: 'PERMISSION_DENIED' };
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', response.status, errorText);
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const data: AllPharmaciesResponse = await response.json();
+    console.log('Successfully fetched all pharmacies:', data.pharmacies.length);
     return data;
   } catch (error) {
     console.error('API Error Details:', error);
