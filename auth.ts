@@ -2,21 +2,48 @@ import NextAuth from 'next-auth';
 import { authConfig } from './auth.config';
 import Credentials from 'next-auth/providers/credentials';
 import { z } from 'zod';
-import type { User } from '@/app/lib/definitions';
-import bcrypt from 'bcrypt';
-import postgres from 'postgres';
 
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+// Types for NestJS API response
+interface NestJSUser {
+  id: string;
+  userName: string;
+  mobileNo: string;
+  role: string;
+  warehouseId: string | null;
+  pharmacyId: string | null;
+  enabled: boolean;
+}
 
-async function getUser(email: string): Promise<User | undefined> {
-    try {
-      const user = await sql<User[]>`SELECT * FROM users WHERE email=${email}`;
-      return user[0];
-    } catch (error) {
-      console.error('Failed to fetch user:', error);
-      throw new Error('Failed to fetch user.');
+interface NestJSAuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: NestJSUser;
+}
+
+async function authenticateWithNestJS(mobileNo: string, password: string): Promise<NestJSAuthResponse | null> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        mobileNo,
+        password,
+      }),
+    });
+
+    if (!response.ok) {
+      return null;
     }
+
+    const data: NestJSAuthResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to authenticate with NestJS:', error);
+    return null;
   }
+}
  
   
 export const { auth, signIn, signOut } = NextAuth({
@@ -25,16 +52,27 @@ export const { auth, signIn, signOut } = NextAuth({
     Credentials({
         async authorize(credentials) {
           const parsedCredentials = z
-            .object({ email: z.string().email(), password: z.string().min(6) })
+            .object({ mobileNo: z.string().min(1), password: z.string().min(6) })
             .safeParse(credentials);
    
           if (parsedCredentials.success) {
-            const { email, password } = parsedCredentials.data;
+            const { mobileNo, password } = parsedCredentials.data;
             
-            const user = await getUser(email);
-            if (!user) return null;
-            const passwordsMatch = await bcrypt.compare(password, user.password);
-            if (passwordsMatch) return user;
+            const authResponse = await authenticateWithNestJS(mobileNo, password);
+            if (!authResponse) return null;
+            
+            // Return user object compatible with NextAuth
+            return {
+              id: authResponse.user.id,
+              name: authResponse.user.userName,
+              email: authResponse.user.mobileNo, // Using mobileNo as email for compatibility
+              role: authResponse.user.role,
+              warehouseId: authResponse.user.warehouseId,
+              pharmacyId: authResponse.user.pharmacyId,
+              enabled: authResponse.user.enabled,
+              accessToken: authResponse.accessToken,
+              refreshToken: authResponse.refreshToken,
+            };
           }
           console.log('Invalid credentials');
           return null;
