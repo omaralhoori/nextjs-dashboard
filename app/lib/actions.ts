@@ -69,3 +69,18 @@ export {
   toggleManufacturerActiveAction,
   deleteManufacturerAction,
 } from '@/app/lib/functions/manufacturers';
+
+export {
+  // Currency functions
+  fetchCurrenciesAction,
+  fetchActiveCurrenciesAction,
+  fetchDefaultCurrencyAction,
+  fetchCurrencyStatsAction,
+  fetchCurrencyByCodeAction,
+  fetchCurrencyByIdAction,
+  createCurrencyAction,
+  updateCurrencyAction,
+  setDefaultCurrencyAction,
+  toggleCurrencyActiveAction,
+  deleteCurrencyAction,
+} from '@/app/lib/functions/currencies';

@@ -55,3 +55,13 @@ export type {
   CreateManufacturerRequest,
   UpdateManufacturerRequest,
 } from './manufacturer';
+
+// Currency types
+export type {
+  Currency,
+  CurrenciesResponse,
+  CurrencyStats,
+  CurrencyStatsResponse,
+  CreateCurrencyRequest,
+  UpdateCurrencyRequest,
+} from './currency';
