@@ -70,6 +70,97 @@ export interface AllPharmaciesResponse {
   totalPages: number;
 }
 
+// Address types
+export interface AddressState {
+  id: string;
+  name: string;
+  citiesCount: number;
+}
+
+export interface City {
+  id: string;
+  name: string;
+  stateId: string;
+  stateName: string;
+  districtsCount: number;
+}
+
+export interface District {
+  id: string;
+  name: string;
+  cityId: string;
+  cityName: string;
+  stateId: string;
+  stateName: string;
+}
+
+export interface StatesResponse {
+  message: string;
+  states: AddressState[];
+  total: number;
+}
+
+export interface CitiesResponse {
+  message: string;
+  cities: City[];
+  total: number;
+}
+
+export interface DistrictsResponse {
+  message: string;
+  districts: District[];
+  total: number;
+}
+
+// Warehouse types
+export interface Warehouse {
+  id: string;
+  warehouse_name: string;
+  district: string;
+  phone: string;
+  location: string;
+  status: string;
+  adminNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WarehousePagination {
+  total: number;
+  limit: number;
+  offset: number;
+  hasMore: boolean;
+  returned: number;
+}
+
+export interface WarehouseFilters {
+  status: string;
+  search: string;
+  district: string;
+}
+
+export interface WarehousesResponse {
+  message: string;
+  warehouses: Warehouse[];
+  pagination: WarehousePagination;
+  filters: WarehouseFilters;
+}
+
+// Warehouse Manager types
+export interface WarehouseManager {
+  id: string;
+  userName: string;
+  mobileNo: string;
+  role: string;
+  warehouseId: string;
+  enabled: boolean;
+}
+
+export interface CreateWarehouseManagerResponse {
+  message: string;
+  user: WarehouseManager;
+}
+
 export async function authenticate(
     prevState: string | undefined,
     formData: FormData,
@@ -408,5 +499,243 @@ export async function fetchAllPharmaciesAction(page: number = 1, limit: number =
       console.error('Network error - check if API server is running and accessible');
     }
     return { error: 'NETWORK_ERROR' };
+  }
+}
+
+// Address API functions
+export async function fetchStatesAction(): Promise<StatesResponse | { error: 'NETWORK_ERROR' }> {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      console.error('NEXT_PUBLIC_API_URL environment variable is not set');
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const response = await fetch(`${apiUrl}/public/address/states`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const data: StatesResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('API Error:', error);
+    return { error: 'NETWORK_ERROR' };
+  }
+}
+
+export async function fetchCitiesAction(stateId: string): Promise<CitiesResponse | { error: 'NETWORK_ERROR' }> {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      console.error('NEXT_PUBLIC_API_URL environment variable is not set');
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const response = await fetch(`${apiUrl}/public/address/cities?stateId=${stateId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const data: CitiesResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('API Error:', error);
+    return { error: 'NETWORK_ERROR' };
+  }
+}
+
+export async function fetchDistrictsAction(cityId: string): Promise<DistrictsResponse | { error: 'NETWORK_ERROR' }> {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      console.error('NEXT_PUBLIC_API_URL environment variable is not set');
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const response = await fetch(`${apiUrl}/public/address/districts?cityId=${cityId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const data: DistrictsResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('API Error:', error);
+    return { error: 'NETWORK_ERROR' };
+  }
+}
+
+export async function createWarehouseAction(warehouseData: {
+  warehouse_name: string;
+  district: string;
+  phone: string;
+  location: string;
+}): Promise<{ success: true; message: string } | { success: false; message: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.accessToken) {
+      return { success: false, message: 'No access token available' };
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      return { success: false, message: 'API URL not configured' };
+    }
+
+    const response = await fetch(`${apiUrl}/admin/warehouses/create`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.user.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(warehouseData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, message: `Failed to create warehouse: ${errorText}` };
+    }
+
+    return { success: true, message: 'Warehouse created successfully' };
+  } catch (error) {
+    console.error('Error creating warehouse:', error);
+    return { success: false, message: 'Failed to create warehouse' };
+  }
+}
+
+export async function fetchWarehousesAction(
+  page: number = 1,
+  limit: number = 20,
+  filters: {
+    status?: string;
+    search?: string;
+    district?: string;
+    orderBy?: string;
+    orderDirection?: 'asc' | 'desc';
+  } = {}
+): Promise<WarehousesResponse | { error: 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR' }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.accessToken) {
+      console.log('No access token available');
+      return { error: 'UNAUTHORIZED' };
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      console.error('NEXT_PUBLIC_API_URL environment variable is not set');
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const offset = (page - 1) * limit;
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      offset: offset.toString(),
+    });
+
+    // Add optional filters
+    if (filters.status) params.append('status', filters.status);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.district) params.append('district', filters.district);
+    if (filters.orderBy) params.append('orderBy', filters.orderBy);
+    if (filters.orderDirection) params.append('orderDirection', filters.orderDirection);
+
+    const url = `${apiUrl}/admin/warehouses?${params.toString()}`;
+    console.log('Fetching warehouses from URL:', url);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.user.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+
+    if (response.status === 401) {
+      console.log('Unauthorized - token may be expired');
+      return { error: 'UNAUTHORIZED' };
+    }
+
+    if (response.status === 403) {
+      console.log('Permission denied');
+      return { error: 'PERMISSION_DENIED' };
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', response.status, errorText);
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const data: WarehousesResponse = await response.json();
+    console.log('Successfully fetched warehouses:', data.warehouses.length);
+    return data;
+  } catch (error) {
+    console.error('API Error Details:', error);
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error('Network error - check if API server is running and accessible');
+    }
+    return { error: 'NETWORK_ERROR' };
+  }
+}
+
+export async function createWarehouseManagerAction(managerData: {
+  userName: string;
+  mobileNo: string;
+  password: string;
+  warehouseId: string;
+}): Promise<CreateWarehouseManagerResponse | { success: false; message: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.accessToken) {
+      return { success: false, message: 'No access token available' };
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      return { success: false, message: 'API URL not configured' };
+    }
+
+    const response = await fetch(`${apiUrl}/admin/warehouses/users/warehouse-manager`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.user.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(managerData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return { success: false, message: `Failed to create warehouse manager: ${errorText}` };
+    }
+
+    const data: CreateWarehouseManagerResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error creating warehouse manager:', error);
+    return { success: false, message: 'Failed to create warehouse manager' };
   }
 }
