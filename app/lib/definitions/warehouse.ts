@@ -48,3 +48,20 @@ export interface CreateWarehouseManagerResponse {
   message: string;
   user: WarehouseManager;
 }
+
+export interface WarehouseUser {
+  id: string;
+  userName: string;
+  mobileNo: string;
+  role: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WarehouseDetailsResponse {
+  message: string;
+  warehouse: Warehouse;
+  users: WarehouseUser[];
+  userCount: number;
+}

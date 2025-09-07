@@ -28,6 +28,7 @@ export {
   createWarehouseAction,
   fetchWarehousesAction,
   createWarehouseManagerAction,
+  fetchWarehouseDetailsAction,
 } from '@/app/lib/functions/warehouse';
 
 export {

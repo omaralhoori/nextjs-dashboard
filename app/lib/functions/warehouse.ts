@@ -8,6 +8,7 @@ import { auth } from '@/auth';
 import type {
   WarehousesResponse,
   CreateWarehouseManagerResponse,
+  WarehouseDetailsResponse,
 } from '@/app/lib/definitions/warehouse';
 
 export async function createWarehouseAction(warehouseData: {
@@ -163,5 +164,61 @@ export async function createWarehouseManagerAction(managerData: {
   } catch (error) {
     console.error('Error creating warehouse manager:', error);
     return { success: false, message: 'Failed to create warehouse manager' };
+  }
+}
+
+export async function fetchWarehouseDetailsAction(warehouseId: string): Promise<WarehouseDetailsResponse | { error: 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR' }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.accessToken) {
+      console.log('No access token available');
+      return { error: 'UNAUTHORIZED' };
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      console.error('NEXT_PUBLIC_API_URL environment variable is not set');
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const url = `${apiUrl}/admin/warehouses/${warehouseId}`;
+    console.log('Fetching warehouse details from URL:', url);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.user.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response ok:', response.ok);
+
+    if (response.status === 401) {
+      console.log('Unauthorized - token may be expired');
+      return { error: 'UNAUTHORIZED' };
+    }
+
+    if (response.status === 403) {
+      console.log('Permission denied');
+      return { error: 'PERMISSION_DENIED' };
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', response.status, errorText);
+      return { error: 'NETWORK_ERROR' };
+    }
+
+    const data: WarehouseDetailsResponse = await response.json();
+    console.log('Successfully fetched warehouse details:', data.warehouse.warehouse_name);
+    return data;
+  } catch (error) {
+    console.error('API Error Details:', error);
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error('Network error - check if API server is running and accessible');
+    }
+    return { error: 'NETWORK_ERROR' };
   }
 }
