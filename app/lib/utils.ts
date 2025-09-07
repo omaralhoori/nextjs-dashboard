@@ -10,14 +10,32 @@ export const formatDateToLocal = (
   dateStr: string,
   locale: string = 'en-US',
 ) => {
+  // Handle empty or null/undefined values
+  if (!dateStr) {
+    return 'N/A';
+  }
+
   const date = new Date(dateStr);
+  
+  // Check if the date is valid
+  if (isNaN(date.getTime())) {
+    console.warn(`Invalid date string: ${dateStr}`);
+    return 'Invalid Date';
+  }
+
   const options: Intl.DateTimeFormatOptions = {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   };
-  const formatter = new Intl.DateTimeFormat(locale, options);
-  return formatter.format(date);
+  
+  try {
+    const formatter = new Intl.DateTimeFormat(locale, options);
+    return formatter.format(date);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Invalid Date';
+  }
 };
 
 

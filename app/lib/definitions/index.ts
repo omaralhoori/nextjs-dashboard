@@ -35,3 +35,13 @@ export type {
   CitiesResponse,
   DistrictsResponse,
 } from './address';
+
+// Item Group types
+export type {
+  ItemGroup,
+  ItemGroupStats,
+  ItemGroupsResponse,
+  ItemGroupStatsResponse,
+  CreateItemGroupRequest,
+  UpdateItemGroupRequest,
+} from './item-group';
