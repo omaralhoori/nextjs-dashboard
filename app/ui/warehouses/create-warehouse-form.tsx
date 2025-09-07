@@ -5,7 +5,9 @@ import { Button } from '@/app/ui/button';
 import { 
   AddressState, 
   City, 
-  District, 
+  District 
+} from '@/app/lib/definitions';
+import { 
   fetchStatesAction, 
   fetchCitiesAction, 
   fetchDistrictsAction, 

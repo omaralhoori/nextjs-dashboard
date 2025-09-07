@@ -1,6 +1,6 @@
 'use client';
 
-import { Warehouse } from '@/app/lib/actions';
+import { Warehouse } from '@/app/lib/definitions/warehouse';
 import { formatDateToLocal } from '@/app/lib/utils';
 import Link from 'next/link';
 import { UserPlusIcon } from '@heroicons/react/24/outline';

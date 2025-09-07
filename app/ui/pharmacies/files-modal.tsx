@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { XMarkIcon, DocumentIcon, ArrowDownTrayIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { PharmacyFilesResponse, PharmacyFile, fetchPharmacyFilesAction, downloadPharmacyFileAction } from '@/app/lib/actions';
+import { PharmacyFilesResponse, PharmacyFile } from '@/app/lib/definitions/pharmacy';
+import { fetchPharmacyFilesAction, downloadPharmacyFileAction } from '@/app/lib/actions';
 
 interface PharmacyFilesModalProps {
   pharmacyId: string;

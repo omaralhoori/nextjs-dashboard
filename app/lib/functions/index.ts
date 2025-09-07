@@ -1,38 +1,35 @@
 // ============================================================================
-// ACTIONS INDEX
+// FUNCTIONS INDEX
 // ============================================================================
-// This file re-exports all functions for backward compatibility
+// This file exports all functions for easy importing
 
-// Re-export all functions from their respective files
-export {
-  // Authentication functions
-  authenticate,
-} from '@/app/lib/functions/auth';
+// Authentication functions
+export { authenticate } from './auth';
 
+// Pharmacy functions
 export {
-  // Pharmacy functions
   approvePharmacy,
   rejectPharmacy,
   fetchPendingPharmaciesAction,
   fetchAllPharmaciesAction,
-} from '@/app/lib/functions/pharmacy';
+} from './pharmacy';
 
+// Pharmacy file functions
 export {
-  // Pharmacy file functions
   fetchPharmacyFilesAction,
   downloadPharmacyFileAction,
-} from '@/app/lib/functions/pharmacy-files';
+} from './pharmacy-files';
 
+// Warehouse functions
 export {
-  // Warehouse functions
   createWarehouseAction,
   fetchWarehousesAction,
   createWarehouseManagerAction,
-} from '@/app/lib/functions/warehouse';
+} from './warehouse';
 
+// Address functions
 export {
-  // Address functions
   fetchStatesAction,
   fetchCitiesAction,
   fetchDistrictsAction,
-} from '@/app/lib/functions/address';
+} from './address';

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/app/ui/button';
+import { Warehouse } from '@/app/lib/definitions/warehouse';
 import { 
-  Warehouse,
   fetchWarehousesAction, 
   createWarehouseManagerAction 
 } from '@/app/lib/actions';
