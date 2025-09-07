@@ -57,3 +57,15 @@ export {
   toggleItemGroupActiveAction,
   deleteItemGroupAction,
 } from '@/app/lib/functions/item-groups';
+
+export {
+  // Manufacturer functions
+  fetchManufacturersAction,
+  fetchActiveManufacturersAction,
+  fetchManufacturerStatsAction,
+  fetchManufacturerByIdAction,
+  createManufacturerAction,
+  updateManufacturerAction,
+  toggleManufacturerActiveAction,
+  deleteManufacturerAction,
+} from '@/app/lib/functions/manufacturers';

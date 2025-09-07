@@ -45,3 +45,13 @@ export type {
   CreateItemGroupRequest,
   UpdateItemGroupRequest,
 } from './item-group';
+
+// Manufacturer types
+export type {
+  Manufacturer,
+  ManufacturersResponse,
+  ManufacturerStats,
+  ManufacturerStatsResponse,
+  CreateManufacturerRequest,
+  UpdateManufacturerRequest,
+} from './manufacturer';
