@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Warehouse } from '@/app/lib/definitions/warehouse';
 import { formatDateToLocal } from '@/app/lib/utils';
 import Link from 'next/link';
-import { UserPlusIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { UserPlusIcon, EyeIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import WarehouseDetailsModal from './warehouse-details-modal';
 
 export default function WarehousesTable({ warehouses }: { warehouses: Warehouse[] }) {
@@ -162,6 +162,13 @@ export default function WarehousesTable({ warehouses }: { warehouses: Warehouse[
                           <UserPlusIcon className="h-4 w-4" />
                           Create Manager
                         </Link>
+                        <button
+                          onClick={() => handleWarehouseClick(warehouse)}
+                          className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800"
+                        >
+                          <MapPinIcon className="h-4 w-4" />
+                          Manage Districts
+                        </button>
                       </div>
                     </td>
                   </tr>

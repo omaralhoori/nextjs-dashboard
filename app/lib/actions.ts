@@ -32,6 +32,14 @@ export {
 } from '@/app/lib/functions/warehouse';
 
 export {
+  // Warehouse district functions
+  fetchWarehouseDistrictsAction,
+  addDistrictToWarehouseAction,
+  removeDistrictFromWarehouseAction,
+  updateDistrictStatusAction,
+} from '@/app/lib/functions/warehouse-districts';
+
+export {
   // Address functions
   fetchStatesAction,
   fetchCitiesAction,

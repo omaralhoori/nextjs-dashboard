@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { XMarkIcon, UserIcon, PhoneIcon, MapPinIcon, CalendarIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
-import { fetchWarehouseDetailsAction } from '@/app/lib/actions';
-import type { WarehouseDetailsResponse, WarehouseUser } from '@/app/lib/definitions/warehouse';
+import { XMarkIcon, UserIcon, PhoneIcon, MapPinIcon, CalendarIcon, BuildingOfficeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { fetchWarehouseDetailsAction, fetchWarehouseDistrictsAction } from '@/app/lib/actions';
+import type { WarehouseDetailsResponse, WarehouseUser, WarehouseDistrict } from '@/app/lib/definitions/warehouse';
+import WarehouseDistrictManagementModal from './warehouse-district-management-modal';
 
 interface WarehouseDetailsModalProps {
   warehouseId: string | null;
@@ -19,12 +20,15 @@ export default function WarehouseDetailsModal({
   onClose 
 }: WarehouseDetailsModalProps) {
   const [warehouseDetails, setWarehouseDetails] = useState<WarehouseDetailsResponse | null>(null);
+  const [warehouseDistricts, setWarehouseDistricts] = useState<WarehouseDistrict[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDistrictModalOpen, setIsDistrictModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && warehouseId) {
       fetchWarehouseDetails();
+      fetchWarehouseDistricts();
     }
   }, [isOpen, warehouseId]);
 
@@ -59,6 +63,22 @@ export default function WarehouseDetailsModal({
       setError('An unexpected error occurred while fetching warehouse details.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWarehouseDistricts = async () => {
+    if (!warehouseId) return;
+    
+    try {
+      const result = await fetchWarehouseDistrictsAction(warehouseId);
+      
+      if ('error' in result) {
+        console.error('Error fetching warehouse districts:', result.error);
+      } else {
+        setWarehouseDistricts(result.districts);
+      }
+    } catch (err) {
+      console.error('Error fetching warehouse districts:', err);
     }
   };
 
@@ -262,6 +282,73 @@ export default function WarehouseDetailsModal({
                   </div>
                 )}
               </div>
+
+              {/* Districts Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <MapPinIcon className="h-5 w-5 mr-2" />
+                    Covered Districts ({warehouseDistricts.length})
+                  </h3>
+                  <button
+                    onClick={() => setIsDistrictModalOpen(true)}
+                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    <Cog6ToothIcon className="h-4 w-4" />
+                    Manage Districts
+                  </button>
+                </div>
+
+                {warehouseDistricts.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <MapPinIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No districts assigned to this warehouse</p>
+                    <button
+                      onClick={() => setIsDistrictModalOpen(true)}
+                      className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Add districts
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              District Name
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Status
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {warehouseDistricts.map((district) => (
+                            <tr key={district.district_id}>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {district.district_name}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  district.active 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {district.active ? 'Active' : 'Inactive'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -276,6 +363,18 @@ export default function WarehouseDetailsModal({
           </button>
         </div>
       </div>
+
+      {/* Warehouse District Management Modal */}
+      <WarehouseDistrictManagementModal
+        warehouseId={warehouseId}
+        warehouseName={warehouseName}
+        isOpen={isDistrictModalOpen}
+        onClose={() => {
+          setIsDistrictModalOpen(false);
+          // Refresh districts when modal closes
+          fetchWarehouseDistricts();
+        }}
+      />
     </div>
   );
 }

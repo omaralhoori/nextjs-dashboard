@@ -9,6 +9,8 @@ import type {
   WarehousesResponse,
   CreateWarehouseManagerResponse,
   WarehouseDetailsResponse,
+  WarehouseDistrictsResponse,
+  AddDistrictToWarehouseRequest,
 } from '@/app/lib/definitions/warehouse';
 
 export async function createWarehouseAction(warehouseData: {

@@ -65,3 +65,21 @@ export interface WarehouseDetailsResponse {
   users: WarehouseUser[];
   userCount: number;
 }
+
+export interface WarehouseDistrict {
+  district_id: string;
+  district_name: string;
+  active: boolean;
+}
+
+export interface WarehouseDistrictsResponse {
+  message: string;
+  warehouseId: string;
+  districts: WarehouseDistrict[];
+  totalDistricts: number;
+  activeDistricts: number;
+}
+
+export interface AddDistrictToWarehouseRequest {
+  districtId: string;
+}
