@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/app/ui/button';
 import { XMarkIcon, MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import MedicineIngredientsManager from './medicine-ingredients-manager';
 import type { Item, CreateItemRequest, UpdateItemRequest } from '@/app/lib/definitions/item';
 import type { Manufacturer } from '@/app/lib/definitions/manufacturer';
 import type { ItemGroup } from '@/app/lib/definitions/item-group';
@@ -821,6 +822,14 @@ export default function ItemForm({
             </Button>
           </div>
         </form>
+
+        {/* Medicine Ingredients Manager - Only show when editing */}
+        {isEditing && item?.id && (
+          <MedicineIngredientsManager 
+            itemId={item.id} 
+            itemName={formData.item_name || item.item_name} 
+          />
+        )}
       </div>
     </div>
   );

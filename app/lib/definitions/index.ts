@@ -76,3 +76,21 @@ export type {
   UpdateItemRequest,
   ItemSearchFilters,
 } from './item';
+
+// Active Ingredient types
+export type {
+  ActiveIngredient,
+  ActiveIngredientsResponse,
+  CreateActiveIngredientRequest,
+  UpdateActiveIngredientRequest,
+  ActiveIngredientResponse,
+} from './active-ingredient';
+
+// Medicine Ingredient types
+export type {
+  MedicineIngredient,
+  MedicineIngredientsResponse,
+  CreateMedicineIngredientRequest,
+  UpdateMedicineIngredientRequest,
+  MedicineIngredientResponse,
+} from './medicine-ingredient';

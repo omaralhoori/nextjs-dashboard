@@ -98,3 +98,23 @@ export {
   toggleItemEnabledAction,
   deleteItemAction,
 } from '@/app/lib/functions/items';
+
+export {
+  // Active Ingredient functions
+  fetchActiveIngredientsAction,
+  searchActiveIngredientsAction,
+  fetchActiveIngredientByIdAction,
+  createActiveIngredientAction,
+  updateActiveIngredientAction,
+  deleteActiveIngredientAction,
+} from '@/app/lib/functions/active-ingredients';
+
+export {
+  // Medicine Ingredient functions
+  fetchItemIngredientsAction,
+  fetchIngredientItemsAction,
+  fetchMedicineIngredientAction,
+  addIngredientToItemAction,
+  updateMedicineIngredientAction,
+  removeIngredientFromItemAction,
+} from '@/app/lib/functions/medicine-ingredients';

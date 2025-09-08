@@ -10,6 +10,7 @@ import {
   CogIcon,
   CurrencyDollarIcon,
   CubeIcon,
+  BeakerIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -25,6 +26,7 @@ const links = [
   { name: 'Manufacturers', href: '/dashboard/manufacturers', icon: CogIcon },
   { name: 'Currencies', href: '/dashboard/currencies', icon: CurrencyDollarIcon },
   { name: 'Items', href: '/dashboard/items', icon: CubeIcon },
+  { name: 'Active Ingredients', href: '/dashboard/active-ingredients', icon: BeakerIcon },
 ];
 
 export default function NavLinks() {
