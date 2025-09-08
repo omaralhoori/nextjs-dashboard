@@ -65,3 +65,14 @@ export type {
   CreateCurrencyRequest,
   UpdateCurrencyRequest,
 } from './currency';
+
+// Item types
+export type {
+  Item,
+  ItemsResponse,
+  ItemStats,
+  ItemStatsResponse,
+  CreateItemRequest,
+  UpdateItemRequest,
+  ItemSearchFilters,
+} from './item';

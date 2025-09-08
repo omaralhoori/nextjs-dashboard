@@ -84,3 +84,17 @@ export {
   toggleCurrencyActiveAction,
   deleteCurrencyAction,
 } from '@/app/lib/functions/currencies';
+
+export {
+  // Item functions
+  fetchItemsAction,
+  fetchEnabledItemsAction,
+  searchItemsAction,
+  fetchItemStatsAction,
+  fetchItemByBarcodeAction,
+  fetchItemByIdAction,
+  createItemAction,
+  updateItemAction,
+  toggleItemEnabledAction,
+  deleteItemAction,
+} from '@/app/lib/functions/items';
