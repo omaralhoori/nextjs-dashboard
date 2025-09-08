@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/app/ui/button';
 import { XMarkIcon, MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import MedicineIngredientsManager from './medicine-ingredients-manager';
+import ImageUpload from './image-upload';
 import type { Item, CreateItemRequest, UpdateItemRequest } from '@/app/lib/definitions/item';
 import type { Manufacturer } from '@/app/lib/definitions/manufacturer';
 import type { ItemGroup } from '@/app/lib/definitions/item-group';
 import type { Currency } from '@/app/lib/definitions/currency';
 import type { Warehouse } from '@/app/lib/definitions/warehouse';
+import type { ItemFile } from '@/app/lib/definitions/item-file';
 
 interface ItemFormProps {
   item?: Item | null;
@@ -61,6 +63,7 @@ export default function ItemForm({
   const [showManufacturerDropdown, setShowManufacturerDropdown] = useState(false);
   const [showWarehouseDropdown, setShowWarehouseDropdown] = useState(false);
   const [showCurrencyDropdown, setShowCurrencyDropdown] = useState(false);
+  const [itemFiles, setItemFiles] = useState<ItemFile[]>([]);
 
   const isEditing = !!item;
 
@@ -127,6 +130,35 @@ export default function ItemForm({
       setCurrencySearch(selectedCurrency ? `${selectedCurrency.name} (${selectedCurrency.symbol})` : '');
     }
   }, [item, manufacturers, warehouses, currencies]);
+
+  // Fetch item files when editing
+  useEffect(() => {
+    if (item?.id) {
+      fetchItemFiles();
+    }
+  }, [item?.id]);
+
+  const fetchItemFiles = async () => {
+    if (!item?.id) return;
+    
+    try {
+      const { fetchItemWithFilesAction } = await import('@/app/lib/actions');
+      const result = await fetchItemWithFilesAction(item.id);
+      
+      if ('error' in result) {
+        console.error('Error fetching item files:', result.error);
+      } else {
+        setItemFiles(result.files || []);
+      }
+    } catch (err) {
+      console.error('Error fetching item files:', err);
+    }
+  };
+
+  const handleImageUploadSuccess = () => {
+    // Refresh the item files after successful upload
+    fetchItemFiles();
+  };
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -828,6 +860,15 @@ export default function ItemForm({
           <MedicineIngredientsManager 
             itemId={item.id} 
             itemName={formData.item_name || item.item_name} 
+          />
+        )}
+
+        {/* Image Upload - Only show when editing */}
+        {isEditing && item?.id && (
+          <ImageUpload 
+            itemId={item.id}
+            existingFiles={itemFiles}
+            onUploadSuccess={handleImageUploadSuccess}
           />
         )}
       </div>

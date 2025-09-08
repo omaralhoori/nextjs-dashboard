@@ -93,6 +93,7 @@ export {
   fetchItemStatsAction,
   fetchItemByBarcodeAction,
   fetchItemByIdAction,
+  fetchItemWithFilesAction,
   createItemAction,
   updateItemAction,
   toggleItemEnabledAction,
@@ -118,3 +119,8 @@ export {
   updateMedicineIngredientAction,
   removeIngredientFromItemAction,
 } from '@/app/lib/functions/medicine-ingredients';
+
+export {
+  // Item File functions
+  uploadItemImageAction,
+} from '@/app/lib/functions/item-files';

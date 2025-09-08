@@ -94,3 +94,10 @@ export type {
   UpdateMedicineIngredientRequest,
   MedicineIngredientResponse,
 } from './medicine-ingredient';
+
+// Item File types
+export type {
+  ItemFile,
+  ItemWithFiles,
+  UploadImageResponse,
+} from './item-file';

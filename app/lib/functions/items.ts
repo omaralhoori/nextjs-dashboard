@@ -9,6 +9,7 @@ import type {
   UpdateItemRequest,
   ItemSearchFilters
 } from '@/app/lib/definitions/item';
+import type { ItemWithFiles } from '@/app/lib/definitions/item-file';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -353,5 +354,37 @@ export async function deleteItemAction(itemId: string) {
       success: false,
       message: 'Failed to delete item',
     };
+  }
+}
+
+// Fetch item with files
+export async function fetchItemWithFilesAction(itemId: string): Promise<ItemWithFiles | { error: string }> {
+  try {
+    const headers = await getAuthHeaders();
+    
+    const response = await fetch(`${API_BASE_URL}/items/${itemId}/details`, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        return { error: 'UNAUTHORIZED' };
+      }
+      if (response.status === 403) {
+        return { error: 'PERMISSION_DENIED' };
+      }
+      if (response.status === 404) {
+        return { error: 'NOT_FOUND' };
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching item with files:', error);
+    return { error: 'NETWORK_ERROR' };
   }
 }
