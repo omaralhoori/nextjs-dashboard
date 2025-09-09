@@ -76,3 +76,41 @@ export async function fetchItemWithFilesAction(itemId: string): Promise<ItemWith
     return { error: 'NETWORK_ERROR' };
   }
 }
+
+// Delete item file
+export async function deleteItemFileAction(fileId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.accessToken) {
+      return { success: false, message: 'UNAUTHORIZED' };
+    }
+
+    const response = await fetch(`${API_URL}/item-files/${fileId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.user.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        return { success: false, message: 'UNAUTHORIZED' };
+      }
+      if (response.status === 403) {
+        return { success: false, message: 'PERMISSION_DENIED' };
+      }
+      if (response.status === 404) {
+        return { success: false, message: 'FILE_NOT_FOUND' };
+      }
+      const errorData = await response.json();
+      return { success: false, message: errorData.message || 'Failed to delete file' };
+    }
+
+    const result = await response.json();
+    return { success: true, message: result.message || 'File deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting item file:', error);
+    return { success: false, message: 'NETWORK_ERROR' };
+  }
+}

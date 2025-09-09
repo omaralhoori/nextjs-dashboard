@@ -8,19 +8,21 @@ import {
   CloudArrowUpIcon,
   ExclamationTriangleIcon 
 } from '@heroicons/react/24/outline';
-import { uploadItemImageAction } from '@/app/lib/actions';
+import { uploadItemImageAction, deleteItemFileAction } from '@/app/lib/actions';
 import type { ItemFile } from '@/app/lib/definitions/item-file';
 
 interface ImageUploadProps {
   itemId: string;
   existingFiles?: ItemFile[];
   onUploadSuccess?: () => void;
+  onDeleteSuccess?: () => void;
 }
 
 export default function ImageUpload({ 
   itemId, 
   existingFiles = [], 
-  onUploadSuccess 
+  onUploadSuccess,
+  onDeleteSuccess
 }: ImageUploadProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -110,6 +112,30 @@ export default function ImageUpload({
 
   const openFileDialog = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleDeleteImage = async (fileId: string) => {
+    setError(null);
+    setMessage(null);
+
+    try {
+      const result = await deleteItemFileAction(fileId);
+      
+      if (result.success) {
+        setMessage(result.message || 'Image deleted successfully');
+        if (onDeleteSuccess) {
+          onDeleteSuccess();
+        }
+        
+        // Clear message after 3 seconds
+        setTimeout(() => setMessage(null), 3000);
+      } else {
+        setError(result.message);
+      }
+    } catch (err) {
+      console.error('Error deleting image:', err);
+      setError('Failed to delete image');
+    }
   };
 
   const getImageUrl = (file: ItemFile) => {
@@ -218,7 +244,13 @@ export default function ImageUpload({
                   />
                 </div>
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center">
-                  <button className="opacity-0 group-hover:opacity-100 bg-red-600 text-white p-1 rounded-full hover:bg-red-700 transition-all">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteImage(file.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 bg-red-600 text-white p-1 rounded-full hover:bg-red-700 transition-all"
+                  >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
                 </div>

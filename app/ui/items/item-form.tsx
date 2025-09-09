@@ -160,6 +160,11 @@ export default function ItemForm({
     fetchItemFiles();
   };
 
+  const handleImageDeleteSuccess = () => {
+    // Refresh the item files after successful deletion
+    fetchItemFiles();
+  };
+
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
@@ -869,6 +874,7 @@ export default function ItemForm({
             itemId={item.id}
             existingFiles={itemFiles}
             onUploadSuccess={handleImageUploadSuccess}
+            onDeleteSuccess={handleImageDeleteSuccess}
           />
         )}
       </div>

@@ -21,7 +21,7 @@ export default function DistrictSelection({
   
   const [selectedState, setSelectedState] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
-  const [selectedDistrict, setSelectedDistrict] = useState<string>('');
+  const [tempSelectedDistricts, setTempSelectedDistricts] = useState<string[]>([]);
   
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
@@ -53,7 +53,7 @@ export default function DistrictSelection({
     setCities([]);
     setDistricts([]);
     setSelectedCity('');
-    setSelectedDistrict('');
+    setTempSelectedDistricts([]);
     
     try {
       const result = await fetchCitiesAction(stateId);
@@ -72,7 +72,7 @@ export default function DistrictSelection({
   const fetchDistricts = async (cityId: string) => {
     setLoadingDistricts(true);
     setDistricts([]);
-    setSelectedDistrict('');
+    setTempSelectedDistricts([]);
     
     try {
       const result = await fetchDistrictsAction(cityId);
@@ -102,23 +102,34 @@ export default function DistrictSelection({
     }
   };
 
-  const handleDistrictChange = (districtId: string) => {
-    setSelectedDistrict(districtId);
-    if (districtId) {
-      const district = districts.find(d => d.id === districtId);
-      if (district) {
-        onDistrictSelect(district);
-        // Reset selections after selection
-        setSelectedState('');
-        setSelectedCity('');
-        setSelectedDistrict('');
-        setCities([]);
-        setDistricts([]);
-      }
+  const handleDistrictToggle = (districtId: string) => {
+    if (tempSelectedDistricts.includes(districtId)) {
+      // Remove district
+      setTempSelectedDistricts(prev => prev.filter(id => id !== districtId));
+    } else {
+      // Add district
+      setTempSelectedDistricts(prev => [...prev, districtId]);
     }
   };
 
-  const isDistrictSelected = (districtId: string) => {
+  const handleAddSelectedDistricts = () => {
+    // Add all selected districts
+    tempSelectedDistricts.forEach(districtId => {
+      const district = districts.find(d => d.id === districtId);
+      if (district) {
+        onDistrictSelect(district);
+      }
+    });
+    
+    // Reset selections
+    setSelectedState('');
+    setSelectedCity('');
+    setTempSelectedDistricts([]);
+    setCities([]);
+    setDistricts([]);
+  };
+
+  const isDistrictAlreadyAdded = (districtId: string) => {
     return selectedDistricts.some(d => d.id === districtId);
   };
 
@@ -181,29 +192,53 @@ export default function DistrictSelection({
       {/* District Selection */}
       {selectedCity && (
         <div>
-          <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-1">
-            District
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Select Districts ({tempSelectedDistricts.length} selected)
           </label>
-          <select
-            id="district"
-            value={selectedDistrict}
-            onChange={(e) => handleDistrictChange(e.target.value)}
-            disabled={disabled || loadingDistricts}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          >
-            <option value="">Select a district</option>
-            {districts.map((district) => (
-              <option 
-                key={district.id} 
-                value={district.id}
-                disabled={isDistrictSelected(district.id)}
+          {loadingDistricts ? (
+            <div className="text-xs text-gray-500">Loading districts...</div>
+          ) : (
+            <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3 space-y-2">
+              {districts.map((district) => {
+                const isAlreadyAdded = isDistrictAlreadyAdded(district.id);
+                const isChecked = tempSelectedDistricts.includes(district.id);
+                
+                return (
+                  <label 
+                    key={district.id} 
+                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer ${
+                      isAlreadyAdded 
+                        ? 'bg-gray-100 cursor-not-allowed opacity-50' 
+                        : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => handleDistrictToggle(district.id)}
+                      disabled={disabled || isAlreadyAdded}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
+                    />
+                    <span className={`text-sm ${isAlreadyAdded ? 'text-gray-500' : 'text-gray-700'}`}>
+                      {district.name}
+                      {isAlreadyAdded && ' (Already added)'}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+          
+          {tempSelectedDistricts.length > 0 && (
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={handleAddSelectedDistricts}
+                disabled={disabled}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                {district.name} {isDistrictSelected(district.id) ? '(Already selected)' : ''}
-              </option>
-            ))}
-          </select>
-          {loadingDistricts && (
-            <div className="mt-1 text-xs text-gray-500">Loading districts...</div>
+                Add Selected Districts ({tempSelectedDistricts.length})
+              </button>
+            </div>
           )}
         </div>
       )}

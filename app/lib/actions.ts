@@ -123,4 +123,5 @@ export {
 export {
   // Item File functions
   uploadItemImageAction,
+  deleteItemFileAction,
 } from '@/app/lib/functions/item-files';
