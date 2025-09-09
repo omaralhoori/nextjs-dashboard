@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { XMarkIcon, UserIcon, PhoneIcon, MapPinIcon, CalendarIcon, BuildingOfficeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { fetchWarehouseDetailsAction, fetchWarehouseDistrictsAction } from '@/app/lib/actions';
 import type { WarehouseDetailsResponse, WarehouseUser, WarehouseDistrict } from '@/app/lib/definitions/warehouse';
@@ -25,7 +25,7 @@ export default function WarehouseDetailsModal({
   const [error, setError] = useState<string | null>(null);
   const [isDistrictModalOpen, setIsDistrictModalOpen] = useState(false);
 
-  const fetchWarehouseDetails = async () => {
+  const fetchWarehouseDetails = useCallback(async () => {
     if (!warehouseId) return;
     
     setLoading(true);
@@ -57,9 +57,9 @@ export default function WarehouseDetailsModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [warehouseId]);
 
-  const fetchWarehouseDistricts = async () => {
+  const fetchWarehouseDistricts = useCallback(async () => {
     if (!warehouseId) return;
     
     try {
@@ -73,12 +73,18 @@ export default function WarehouseDetailsModal({
     } catch (err) {
       console.error('Error fetching warehouse districts:', err);
     }
-  };
+  }, [warehouseId]);
 
   useEffect(() => {
     if (isOpen && warehouseId) {
       fetchWarehouseDetails();
       fetchWarehouseDistricts();
+    } else if (!isOpen) {
+      // Reset state when modal closes
+      setWarehouseDetails(null);
+      setWarehouseDistricts([]);
+      setError(null);
+      setLoading(false);
     }
   }, [isOpen, warehouseId, fetchWarehouseDetails, fetchWarehouseDistricts]);
 
