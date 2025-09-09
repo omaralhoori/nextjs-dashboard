@@ -101,3 +101,10 @@ export type {
   ItemWithFiles,
   UploadImageResponse,
 } from './item-file';
+
+// User types
+export type {
+  User,
+  UsersResponse,
+  UsersFilters,
+} from './user';

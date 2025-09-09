@@ -125,3 +125,11 @@ export {
   uploadItemImageAction,
   deleteItemFileAction,
 } from '@/app/lib/functions/item-files';
+
+export {
+  // User functions
+  fetchUsersAction,
+  createAdminUserAction,
+  enableUserAction,
+  disableUserAction,
+} from '@/app/lib/functions/users';
