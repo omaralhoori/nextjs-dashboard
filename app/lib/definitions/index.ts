@@ -107,4 +107,7 @@ export type {
   User,
   UsersResponse,
   UsersFilters,
+  UserProfile,
+  ChangePasswordRequest,
+  UpdateProfileRequest,
 } from './user';

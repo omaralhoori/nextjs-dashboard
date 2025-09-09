@@ -32,3 +32,25 @@ export interface UsersFilters {
   limit?: number;
   offset?: number;
 }
+
+export interface UserProfile {
+  id: string;
+  userName: string;
+  mobileNo: string;
+  role: 'admin' | 'warehouse_manager' | 'warehouse_user' | 'pharmacy_manager' | 'pharmacy_user';
+  warehouseId: string | null;
+  pharmacyId: string | null;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface UpdateProfileRequest {
+  userName: string;
+}

@@ -1,7 +1,13 @@
 'use server';
 
 import { auth } from '@/auth';
-import type { UsersResponse, UsersFilters } from '@/app/lib/definitions/user';
+import type { 
+  UsersResponse, 
+  UsersFilters, 
+  UserProfile, 
+  ChangePasswordRequest, 
+  UpdateProfileRequest 
+} from '@/app/lib/definitions/user';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -162,6 +168,105 @@ export async function disableUserAction(userId: string): Promise<{ success: bool
     return { success: true, message: data.message, user: data.user };
   } catch (error) {
     console.error('Error disabling user:', error);
+    return { success: false, message: 'NETWORK_ERROR' };
+  }
+}
+
+// Get user profile
+export async function fetchUserProfileAction(): Promise<UserProfile | { error: string }> {
+  try {
+    const headers = await getAuthHeaders();
+
+    const response = await fetch(`${API_BASE_URL}/users/profile`, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        return { error: 'UNAUTHORIZED' };
+      }
+      if (response.status === 403) {
+        return { error: 'PERMISSION_DENIED' };
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    return { error: 'NETWORK_ERROR' };
+  }
+}
+
+// Update user profile
+export async function updateUserProfileAction(profileData: UpdateProfileRequest): Promise<{ success: boolean; message: string; user?: UserProfile }> {
+  try {
+    const headers = await getAuthHeaders();
+
+    const response = await fetch(`${API_BASE_URL}/users/profile`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(profileData),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        return { success: false, message: 'UNAUTHORIZED' };
+      }
+      if (response.status === 403) {
+        return { success: false, message: 'PERMISSION_DENIED' };
+      }
+      if (response.status === 400) {
+        const errorData = await response.json();
+        return { success: false, message: errorData.message || 'Bad Request' };
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return { success: true, message: data.message, user: data.user };
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    return { success: false, message: 'NETWORK_ERROR' };
+  }
+}
+
+// Change user password
+export async function changePasswordAction(passwordData: ChangePasswordRequest): Promise<{ success: boolean; message: string }> {
+  try {
+    const headers = await getAuthHeaders();
+
+    const response = await fetch(`${API_BASE_URL}/users/change-password`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(passwordData),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        return { success: false, message: 'UNAUTHORIZED' };
+      }
+      if (response.status === 403) {
+        return { success: false, message: 'PERMISSION_DENIED' };
+      }
+      if (response.status === 400) {
+        const errorData = await response.json();
+        // Handle array of validation errors
+        if (Array.isArray(errorData.message)) {
+          return { success: false, message: errorData.message.join(', ') };
+        }
+        return { success: false, message: errorData.message || 'Bad Request' };
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return { success: true, message: data.message };
+  } catch (error) {
+    console.error('Error changing password:', error);
     return { success: false, message: 'NETWORK_ERROR' };
   }
 }

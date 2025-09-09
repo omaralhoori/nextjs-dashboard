@@ -10,6 +10,7 @@ import {
   CubeIcon,
   BeakerIcon,
   UserGroupIcon,
+  UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -27,6 +28,7 @@ const links = [
   { name: 'Currencies', href: '/dashboard/currencies', icon: CurrencyDollarIcon },
   { name: 'Items', href: '/dashboard/items', icon: CubeIcon },
   { name: 'Active Ingredients', href: '/dashboard/active-ingredients', icon: BeakerIcon },
+  { name: 'Profile', href: '/dashboard/profile', icon: UserCircleIcon },
 ];
 
 export default function NavLinks() {

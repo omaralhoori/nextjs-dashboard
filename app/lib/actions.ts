@@ -132,4 +132,7 @@ export {
   createAdminUserAction,
   enableUserAction,
   disableUserAction,
+  fetchUserProfileAction,
+  updateUserProfileAction,
+  changePasswordAction,
 } from '@/app/lib/functions/users';
