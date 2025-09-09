@@ -2,14 +2,12 @@
 
 import { useState } from 'react';
 import { Button } from '@/app/ui/button';
-import { formatDateToLocal } from '@/app/lib/utils';
 import { 
   PencilIcon, 
   TrashIcon, 
   EyeIcon, 
   EyeSlashIcon,
-  PlusIcon,
-  MagnifyingGlassIcon
+  PlusIcon
 } from '@heroicons/react/24/outline';
 import type { Item } from '@/app/lib/definitions/item';
 

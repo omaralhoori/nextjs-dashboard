@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/app/ui/button';
-import { XMarkIcon, MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import MedicineIngredientsManager from './medicine-ingredients-manager';
 import ImageUpload from './image-upload';
 import type { Item, CreateItemRequest, UpdateItemRequest } from '@/app/lib/definitions/item';
@@ -131,14 +131,7 @@ export default function ItemForm({
     }
   }, [item, manufacturers, warehouses, currencies]);
 
-  // Fetch item files when editing
-  useEffect(() => {
-    if (item?.id) {
-      fetchItemFiles();
-    }
-  }, [item?.id]);
-
-  const fetchItemFiles = async () => {
+  const fetchItemFiles = useCallback(async () => {
     if (!item?.id) return;
     
     try {
@@ -153,7 +146,14 @@ export default function ItemForm({
     } catch (err) {
       console.error('Error fetching item files:', err);
     }
-  };
+  }, [item?.id]);
+
+  // Fetch item files when editing
+  useEffect(() => {
+    if (item?.id) {
+      fetchItemFiles();
+    }
+  }, [item?.id, fetchItemFiles]);
 
   const handleImageUploadSuccess = () => {
     // Refresh the item files after successful upload

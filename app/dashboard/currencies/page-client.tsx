@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { 
   fetchCurrenciesAction, 
   createCurrencyAction, 
@@ -16,7 +15,6 @@ import PermissionError from '@/app/ui/permission-error';
 import type { Currency, CreateCurrencyRequest, UpdateCurrencyRequest } from '@/app/lib/definitions/currency';
 
 export default function CurrenciesPageClient() {
-  const router = useRouter();
   const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

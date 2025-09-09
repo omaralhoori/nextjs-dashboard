@@ -31,7 +31,8 @@ export default function PharmacyFilesModal({ pharmacyId, pharmacyName, isOpen, o
       } else {
         setFilesData(result.data);
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Error loading pharmacy files:', error);
       setError('Failed to load pharmacy files');
     } finally {
       setLoading(false);
@@ -56,7 +57,8 @@ export default function PharmacyFilesModal({ pharmacyId, pharmacyName, isOpen, o
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }
-    } catch (err) {
+    } catch (error) {
+      console.error('Error downloading file:', error);
       alert('Failed to download file');
     } finally {
       setDownloadingFiles(prev => {

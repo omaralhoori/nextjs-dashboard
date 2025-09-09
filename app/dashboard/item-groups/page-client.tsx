@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { 
   fetchItemGroupsAction, 
   createItemGroupAction, 
@@ -15,7 +14,6 @@ import PermissionError from '@/app/ui/permission-error';
 import type { ItemGroup, CreateItemGroupRequest, UpdateItemGroupRequest } from '@/app/lib/definitions/item-group';
 
 export default function ItemGroupsPageClient() {
-  const router = useRouter();
   const [itemGroups, setItemGroups] = useState<ItemGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

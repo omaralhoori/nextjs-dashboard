@@ -5,7 +5,10 @@ import { lusitana } from '@/app/ui/fonts';
 import { Suspense } from 'react';
 import { fetchPendingPharmaciesAction } from '@/app/lib/actions';
 import { PharmaciesTableSkeleton } from '@/app/ui/skeletons';
- 
+
+// Force dynamic rendering to avoid PPR conflicts
+export const dynamic = 'force-dynamic';
+
 export default async function Page() {
   const pharmaciesData = await fetchPendingPharmaciesAction();
 

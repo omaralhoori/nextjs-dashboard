@@ -1,3 +1,5 @@
+import type { Item } from './item';
+
 export interface ItemFile {
   id: string;
   file_type: string;
@@ -8,7 +10,7 @@ export interface ItemFile {
 }
 
 export interface ItemWithFiles {
-  item: any; // Item data
+  item: Item; // Item data
   files: ItemFile[];
 }
 

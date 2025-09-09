@@ -25,13 +25,6 @@ export default function WarehouseDetailsModal({
   const [error, setError] = useState<string | null>(null);
   const [isDistrictModalOpen, setIsDistrictModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && warehouseId) {
-      fetchWarehouseDetails();
-      fetchWarehouseDistricts();
-    }
-  }, [isOpen, warehouseId]);
-
   const fetchWarehouseDetails = async () => {
     if (!warehouseId) return;
     
@@ -81,6 +74,13 @@ export default function WarehouseDetailsModal({
       console.error('Error fetching warehouse districts:', err);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && warehouseId) {
+      fetchWarehouseDetails();
+      fetchWarehouseDistricts();
+    }
+  }, [isOpen, warehouseId, fetchWarehouseDetails, fetchWarehouseDistricts]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

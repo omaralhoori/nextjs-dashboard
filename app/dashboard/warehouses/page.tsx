@@ -11,11 +11,12 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 export default async function Page({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     page?: string;
-  };
+  }>;
 }) {
-  const page = Number(searchParams?.page) || 1;
+  const resolvedSearchParams = await searchParams;
+  const page = Number(resolvedSearchParams?.page) || 1;
   const limit = 20;
 
   const warehousesData = await fetchWarehousesAction(page, limit);

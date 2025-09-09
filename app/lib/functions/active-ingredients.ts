@@ -4,8 +4,6 @@ import { auth } from '@/auth';
 import type { 
   ActiveIngredient, 
   ActiveIngredientsResponse, 
-  ActiveIngredientsApiResponse,
-  ActiveIngredientsActualResponse,
   CreateActiveIngredientRequest, 
   UpdateActiveIngredientRequest,
   ActiveIngredientResponse 

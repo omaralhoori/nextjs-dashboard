@@ -2,7 +2,6 @@
 
 import { auth } from '@/auth';
 import type { 
-  Currency, 
   CurrenciesResponse, 
   CurrencyStatsResponse,
   CreateCurrencyRequest,

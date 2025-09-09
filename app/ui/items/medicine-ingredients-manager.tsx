@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   PlusIcon, 
   TrashIcon, 
@@ -50,14 +50,7 @@ export default function MedicineIngredientsManager({
   const [editStrength, setEditStrength] = useState('');
   const [isEditFormOpen, setIsEditFormOpen] = useState(false);
 
-  useEffect(() => {
-    if (itemId) {
-      fetchIngredients();
-      fetchAvailableIngredients();
-    }
-  }, [itemId]);
-
-  const fetchIngredients = async () => {
+  const fetchIngredients = useCallback(async () => {
     try {
       const result = await fetchItemIngredientsAction(itemId);
       
@@ -72,7 +65,14 @@ export default function MedicineIngredientsManager({
     } finally {
       setLoading(false);
     }
-  };
+  }, [itemId]);
+
+  useEffect(() => {
+    if (itemId) {
+      fetchIngredients();
+      fetchAvailableIngredients();
+    }
+  }, [itemId, fetchIngredients]);
 
   const fetchAvailableIngredients = async () => {
     try {
@@ -285,7 +285,7 @@ export default function MedicineIngredientsManager({
       {ingredients.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <p>No ingredients added yet.</p>
-          <p className="text-sm">Click "Add Ingredient" to get started.</p>
+          <p className="text-sm">Click &quot;Add Ingredient&quot; to get started.</p>
         </div>
       ) : (
         <div className="space-y-3">

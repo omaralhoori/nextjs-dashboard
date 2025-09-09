@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { 
   PhotoIcon, 
   XMarkIcon, 
@@ -204,9 +205,11 @@ export default function ImageUpload({
             {existingFiles.map((file) => (
               <div key={file.id} className="relative group">
                 <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                  <img
+                  <Image
                     src={getImageUrl(file)}
                     alt={file.file_name}
+                    width={200}
+                    height={200}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;

@@ -2,7 +2,6 @@
 
 import { auth } from '@/auth';
 import type { 
-  Item, 
   ItemsResponse, 
   ItemStatsResponse,
   CreateItemRequest,

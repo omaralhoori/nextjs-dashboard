@@ -3,14 +3,15 @@ import { lusitana } from '@/app/ui/fonts';
 import Link from 'next/link';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
-export default function Page({
+export default async function Page({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams?: Promise<{
     warehouseId?: string;
-  };
+  }>;
 }) {
-  const warehouseId = searchParams?.warehouseId;
+  const resolvedSearchParams = await searchParams;
+  const warehouseId = resolvedSearchParams?.warehouseId;
 
   return (
     <main>

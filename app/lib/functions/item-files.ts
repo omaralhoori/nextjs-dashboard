@@ -2,7 +2,6 @@
 
 import { auth } from '@/auth';
 import type { 
-  ItemFile, 
   ItemWithFiles, 
   UploadImageResponse 
 } from '@/app/lib/definitions/item-file';

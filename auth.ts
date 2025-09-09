@@ -48,6 +48,7 @@ async function authenticateWithNestJS(mobileNo: string, password: string): Promi
   
 export const { auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  trustHost: true, // Add this line to trust all hosts in development
   providers: [ 
     Credentials({
         async authorize(credentials) {

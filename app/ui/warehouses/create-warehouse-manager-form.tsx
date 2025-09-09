@@ -73,7 +73,8 @@ export default function CreateWarehouseManagerForm({ warehouseId }: { warehouseI
       } else {
         setMessage({ type: 'error', text: 'An unexpected error occurred' });
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error creating warehouse manager:', err);
       setMessage({ type: 'error', text: 'An unexpected error occurred' });
     } finally {
       setLoading(false);

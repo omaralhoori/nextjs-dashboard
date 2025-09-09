@@ -152,7 +152,8 @@ export default function CreateWarehouseForm() {
       } else {
         setMessage({ type: 'error', text: result.message });
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error creating warehouse:', err);
       setMessage({ type: 'error', text: 'An unexpected error occurred' });
     } finally {
       setLoading(false);

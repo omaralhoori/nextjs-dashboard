@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { 
   fetchManufacturersAction, 
   createManufacturerAction, 
@@ -15,7 +14,6 @@ import PermissionError from '@/app/ui/permission-error';
 import type { Manufacturer, CreateManufacturerRequest, UpdateManufacturerRequest } from '@/app/lib/definitions/manufacturer';
 
 export default function ManufacturersPageClient() {
-  const router = useRouter();
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

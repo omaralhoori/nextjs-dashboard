@@ -6,7 +6,6 @@ import {
   PencilIcon, 
   TrashIcon, 
   PowerIcon,
-  EyeIcon,
   PlusIcon 
 } from '@heroicons/react/24/outline';
 import type { ItemGroup } from '@/app/lib/definitions/item-group';

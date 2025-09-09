@@ -5,7 +5,16 @@ import {
   InboxIcon,
 } from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
-import { fetchCardData } from '@/app/lib/data';
+
+// Placeholder data for dashboard cards
+const fetchCardData = async () => {
+  return {
+    totalPaidInvoices: '$12,345',
+    totalPendingInvoices: '$1,234',
+    numberOfInvoices: 89,
+    numberOfCustomers: 24,
+  };
+};
 
 const iconMap = {
   collected: BanknotesIcon,

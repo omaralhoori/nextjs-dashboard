@@ -8,10 +8,13 @@ export const authConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
+      const isOnLogin = nextUrl.pathname.startsWith('/login');
+      
       if (isOnDashboard) {
         if (isLoggedIn) return true;
         return false; // Redirect unauthenticated users to login page
-      } else if (isLoggedIn) {
+      } else if (isLoggedIn && !isOnLogin) {
+        // Only redirect if not already on login page to avoid redirect loops
         return Response.redirect(new URL('/dashboard', nextUrl));
       }
       return true;
@@ -32,12 +35,12 @@ export const authConfig = {
       // Send properties to the client
       if (token) {
         session.user.id = token.sub!;
-        session.user.accessToken = token.accessToken;
-        session.user.refreshToken = token.refreshToken;
-        session.user.role = token.role;
-        session.user.warehouseId = token.warehouseId;
-        session.user.pharmacyId = token.pharmacyId;
-        session.user.enabled = token.enabled;
+        session.user.accessToken = token.accessToken as string;
+        session.user.refreshToken = token.refreshToken as string;
+        session.user.role = token.role as string;
+        session.user.warehouseId = token.warehouseId as string | null;
+        session.user.pharmacyId = token.pharmacyId as string | null;
+        session.user.enabled = token.enabled as boolean;
       }
       return session;
     },

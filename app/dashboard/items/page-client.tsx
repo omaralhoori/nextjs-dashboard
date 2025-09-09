@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { 
   fetchItemsAction, 
   createItemAction, 
@@ -25,7 +24,6 @@ import type { Currency } from '@/app/lib/definitions/currency';
 import type { Warehouse } from '@/app/lib/definitions/warehouse';
 
 export default function ItemsPageClient() {
-  const router = useRouter();
   const [items, setItems] = useState<Item[]>([]);
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
   const [itemGroups, setItemGroups] = useState<ItemGroup[]>([]);

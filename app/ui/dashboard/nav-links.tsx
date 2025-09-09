@@ -1,9 +1,7 @@
 'use client';
 
 import {
-  UserGroupIcon,
   HomeIcon,
-  DocumentDuplicateIcon,
   BuildingOfficeIcon,
   BuildingStorefrontIcon,
   Squares2X2Icon,
