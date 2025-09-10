@@ -6,7 +6,8 @@ import type {
   UsersFilters, 
   UserProfile, 
   ChangePasswordRequest, 
-  UpdateProfileRequest 
+  UpdateProfileRequest,
+  User
 } from '@/app/lib/definitions/user';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -70,7 +71,7 @@ export async function createAdminUserAction(userData: {
   userName: string;
   mobileNo: string;
   password: string;
-}): Promise<{ success: boolean; message: string; user?: any }> {
+}): Promise<{ success: boolean; message: string; user?: User }> {
   try {
     const headers = await getAuthHeaders();
 
@@ -103,7 +104,7 @@ export async function createAdminUserAction(userData: {
 }
 
 // Enable user
-export async function enableUserAction(userId: string): Promise<{ success: boolean; message: string; user?: any }> {
+export async function enableUserAction(userId: string): Promise<{ success: boolean; message: string; user?: User }> {
   try {
     const headers = await getAuthHeaders();
 
@@ -138,7 +139,7 @@ export async function enableUserAction(userId: string): Promise<{ success: boole
 }
 
 // Disable user
-export async function disableUserAction(userId: string): Promise<{ success: boolean; message: string; user?: any }> {
+export async function disableUserAction(userId: string): Promise<{ success: boolean; message: string; user?: User }> {
   try {
     const headers = await getAuthHeaders();
 
