@@ -52,7 +52,8 @@ export default async function Page() {
             </p>
             <Link
               href="/login"
-              className="inline-flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-colors shadow-lg"
+              className="inline-flex items-center gap-3 text-white font-semibold px-8 py-4 rounded-lg text-lg transition-colors shadow-lg hover:opacity-90"
+              style={{ backgroundColor: '#007476' }}
             >
               <span>Get Started</span>
               <ArrowRightIcon className="w-6 h-6" />
