@@ -83,6 +83,9 @@ export default function ItemsTable({
                         {item.generic_name && `${item.generic_name} • `}
                         {item.barcode}
                       </p>
+                      <p className="text-xs text-gray-500">
+                        Needs Stamp: {item.needs_stamp ? 'Yes' : 'No'}
+                      </p>
                     </div>
                     <div className={`px-2 py-1 text-xs rounded-full ${
                       item.enabled 
@@ -164,6 +167,9 @@ export default function ItemsTable({
                   Drug Class
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
+                  Needs Stamp
+                </th>
+                <th scope="col" className="px-3 py-5 font-medium">
                   Status
                 </th>
                 <th scope="col" className="relative py-3 pl-6 pr-3">
@@ -174,7 +180,7 @@ export default function ItemsTable({
             <tbody className="bg-white">
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
                     No items found
                   </td>
                 </tr>
@@ -187,9 +193,12 @@ export default function ItemsTable({
                           <div className="font-medium text-gray-900">
                             {item.item_name}
                           </div>
-                          <div className="text-gray-500 text-xs">
-                            {item.form} • {item.volume}
-                          </div>
+                      <div className="text-gray-500 text-xs">
+                        {Array.isArray(item.forms) && item.forms.length > 0
+                          ? (item.forms as any[]).map((f) => (typeof f === 'string' ? f : (f?.id ?? ''))).filter(Boolean).join(', ')
+                          : item.form}
+                        {item.volume ? ` • ${item.volume}` : ''}
+                      </div>
                         </div>
                       </div>
                     </td>
@@ -231,6 +240,9 @@ export default function ItemsTable({
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getDrugClassBadgeColor(item.drug_class)}`}>
                         {item.drug_class}
                       </span>
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-3 text-gray-500">
+                      {item.needs_stamp ? 'Yes' : 'No'}
                     </td>
                     <td className="whitespace-nowrap px-3 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

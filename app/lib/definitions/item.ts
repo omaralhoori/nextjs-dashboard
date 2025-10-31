@@ -10,13 +10,15 @@ export interface Item {
   buying_price: number;
   selling_price: number;
   currency: string;
-  form: string;
+  form: string; // legacy single form
+  forms?: Array<{ id: string } | string>; // new multi-forms support
   quantity: number;
   volume?: string | null;
   usage?: string | null;
   importer?: string | null;
   drug_class: 'OTC' | 'RX' | 'Controlled';
   drug_class_description?: string | null;
+  needs_stamp?: boolean; // whether the item requires a stamp
   enabled: boolean;
   created_at: string;
   updated_at: string;
@@ -103,7 +105,8 @@ export interface CreateItemRequest {
   buying_price: number;
   selling_price: number;
   currency: string;
-  form: string;
+  form?: string; // optional when using forms[]
+  forms?: string[];
   quantity?: number;
   volume?: string;
   usage?: string;
@@ -111,6 +114,7 @@ export interface CreateItemRequest {
   drug_class: 'OTC' | 'RX' | 'Controlled';
   drug_class_description?: string;
   warehouse?: string;
+  needs_stamp?: boolean;
 }
 
 export interface UpdateItemRequest {
@@ -124,6 +128,7 @@ export interface UpdateItemRequest {
   selling_price?: number;
   currency?: string;
   form?: string;
+  forms?: string[];
   quantity?: number;
   volume?: string;
   usage?: string;
@@ -131,6 +136,7 @@ export interface UpdateItemRequest {
   drug_class?: 'OTC' | 'RX' | 'Controlled';
   drug_class_description?: string;
   warehouse?: string;
+  needs_stamp?: boolean;
   enabled?: boolean;
 }
 

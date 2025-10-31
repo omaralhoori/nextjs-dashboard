@@ -53,10 +53,18 @@ export default function ItemForm({
     drug_class: 'OTC' as 'OTC' | 'RX' | 'Controlled',
     drug_class_description: '',
     warehouse: '',
+    needs_stamp: false,
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   
   // Searchable dropdown states
+  const [formsSearch, setFormsSearch] = useState('');
+  const [showFormsDropdown, setShowFormsDropdown] = useState(false);
+  const [formsSuggestions, setFormsSuggestions] = useState<string[]>([]);
+  const [selectedForms, setSelectedForms] = useState<string[]>([]);
+  const [itemNameSearch, setItemNameSearch] = useState('');
+  const [showItemNameDropdown, setShowItemNameDropdown] = useState(false);
+  const [itemNameSuggestions, setItemNameSuggestions] = useState<string[]>([]);
   const [manufacturerSearch, setManufacturerSearch] = useState('');
   const [warehouseSearch, setWarehouseSearch] = useState('');
   const [currencySearch, setCurrencySearch] = useState('');
@@ -88,7 +96,15 @@ export default function ItemForm({
         drug_class: item.drug_class || 'OTC',
         drug_class_description: item.drug_class_description || '',
         warehouse: item.warehouse || '',
+        needs_stamp: item.needs_stamp ?? false,
       });
+      setItemNameSearch(item.item_name || '');
+      // Initialize selected forms from item
+      const initialForms: string[] = Array.isArray(item.forms) && item.forms.length > 0
+        ? item.forms.map((f: any) => (typeof f === 'string' ? f : (f?.id ?? '') )).filter(Boolean)
+        : (item.form ? [item.form] : []);
+      setSelectedForms(initialForms);
+      setFormsSearch('');
     } else {
       setFormData({
         manufacturer_id: '',
@@ -108,11 +124,15 @@ export default function ItemForm({
         drug_class: 'OTC',
         drug_class_description: '',
         warehouse: '',
+        needs_stamp: false,
       });
       
       // Reset search values
+      setItemNameSearch('');
       setManufacturerSearch('');
       setWarehouseSearch('');
+      setSelectedForms([]);
+      setFormsSearch('');
     }
     setErrors({});
   }, [item]);
@@ -130,6 +150,70 @@ export default function ItemForm({
       setCurrencySearch(selectedCurrency ? `${selectedCurrency.name} (${selectedCurrency.symbol})` : '');
     }
   }, [item, manufacturers, warehouses, currencies]);
+
+  // Debounced fetch for item name suggestions (via internal API route with auth)
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ search: itemNameSearch || '', limit: '10' });
+        const res = await fetch(`/api/items/names?${params.toString()}`, {
+          method: 'GET',
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        if (!active) return;
+        if (!res.ok) {
+          setItemNameSuggestions([]);
+          return;
+        }
+        const data = await res.json();
+        const names: string[] = Array.isArray(data?.items) ? data.items : [];
+        setItemNameSuggestions(names);
+      } catch (err) {
+        if (active) setItemNameSuggestions([]);
+      }
+    }, 300);
+
+    return () => {
+      active = false;
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [itemNameSearch]);
+
+  // Debounced fetch for forms suggestions
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ search: formsSearch || '', limit: '10' });
+        const res = await fetch(`/api/items/forms?${params.toString()}`, {
+          method: 'GET',
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        if (!active) return;
+        if (!res.ok) {
+          setFormsSuggestions([]);
+          return;
+        }
+        const data = await res.json();
+        const items: string[] = Array.isArray(data?.items) ? data.items : [];
+        setFormsSuggestions(items);
+      } catch (err) {
+        if (active) setFormsSuggestions([]);
+      }
+    }, 300);
+
+    return () => {
+      active = false;
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [formsSearch]);
 
   const fetchItemFiles = useCallback(async () => {
     if (!item?.id) return;
@@ -196,8 +280,9 @@ export default function ItemForm({
       newErrors.currency = 'Currency is required';
     }
 
-    if (!formData.form.trim()) {
-      newErrors.form = 'Form is required';
+    // Validate form: at least one form must be selected
+    if (selectedForms.length === 0) {
+      newErrors.form = 'At least one form is required';
     }
 
     if (!formData.quantity || isNaN(Number(formData.quantity)) || Number(formData.quantity) < 1) {
@@ -231,7 +316,9 @@ export default function ItemForm({
         buying_price: Number(formData.buying_price),
         selling_price: Number(formData.selling_price),
         currency: formData.currency,
-        form: formData.form.trim(),
+        // Send legacy single form only when no multi forms selected
+        form: selectedForms.length === 0 ? formData.form.trim() : undefined,
+        forms: selectedForms.length > 0 ? selectedForms : undefined,
         quantity: Number(formData.quantity),
         volume: formData.volume.trim() || undefined,
         usage: formData.usage.trim() || undefined,
@@ -239,6 +326,7 @@ export default function ItemForm({
         drug_class: formData.drug_class,
         drug_class_description: formData.drug_class_description.trim() || undefined,
         warehouse: formData.warehouse || undefined,
+        needs_stamp: formData.needs_stamp,
       };
 
       await onSubmit(submitData);
@@ -267,7 +355,10 @@ export default function ItemForm({
       drug_class: 'OTC',
       drug_class_description: '',
       warehouse: '',
+      needs_stamp: false,
     });
+    setSelectedForms([]);
+    setFormsSearch('');
     setErrors({});
     setManufacturerSearch('');
     setWarehouseSearch('');
@@ -336,7 +427,15 @@ export default function ItemForm({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
-      if (!target.closest('.manufacturer-dropdown') && !target.closest('.warehouse-dropdown') && !target.closest('.currency-dropdown')) {
+      if (
+        !target.closest('.forms-dropdown') &&
+        !target.closest('.item-name-dropdown') &&
+        !target.closest('.manufacturer-dropdown') &&
+        !target.closest('.warehouse-dropdown') &&
+        !target.closest('.currency-dropdown')
+      ) {
+        setShowFormsDropdown(false);
+        setShowItemNameDropdown(false);
         setShowManufacturerDropdown(false);
         setShowWarehouseDropdown(false);
         setShowCurrencyDropdown(false);
@@ -374,6 +473,56 @@ export default function ItemForm({
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-gray-900">Basic Information</h3>
               
+          {/* Item Name with suggestions */}
+          <div>
+            <label htmlFor="item_name" className="block text-sm font-medium text-gray-700 mb-1">
+              Item Name *
+            </label>
+            <div className="relative item-name-dropdown">
+              <input
+                type="text"
+                id="item_name"
+                value={formData.item_name}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  handleInputChange('item_name', v);
+                  setItemNameSearch(v);
+                  setShowItemNameDropdown(true);
+                }}
+                onFocus={() => setShowItemNameDropdown(true)}
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.item_name ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Enter or select item name"
+                disabled={loading}
+              />
+              {showItemNameDropdown && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {itemNameSuggestions.length > 0 ? (
+                    itemNameSuggestions.map((name) => (
+                      <div
+                        key={name}
+                        onClick={() => {
+                          handleInputChange('item_name', name);
+                          setItemNameSearch(name);
+                          setShowItemNameDropdown(false);
+                        }}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                      >
+                        {name}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-gray-500">No matches</div>
+                  )}
+                </div>
+              )}
+            </div>
+            {errors.item_name && (
+              <p className="mt-1 text-sm text-red-600">{errors.item_name}</p>
+            )}
+          </div>
+
               {/* Manufacturer */}
               <div>
                 <label htmlFor="manufacturer_id" className="block text-sm font-medium text-gray-700 mb-1">
@@ -490,22 +639,101 @@ export default function ItemForm({
                 />
               </div>
 
-              {/* Form */}
+              {/* Forms (Multi-select with suggestions) */}
               <div>
-                <label htmlFor="form" className="block text-sm font-medium text-gray-700 mb-1">
-                  Form *
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Forms *
                 </label>
-                <input
-                  type="text"
-                  id="form"
-                  value={formData.form}
-                  onChange={(e) => handleInputChange('form', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.form ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                  placeholder="e.g., Tablets, Capsules, Syrup"
-                  disabled={loading}
-                />
+                <div className={`border rounded-md p-2 ${errors.form ? 'border-red-300' : 'border-gray-300'}`}>
+                  {/* Selected chips */}
+                  {selectedForms.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {selectedForms.map((f) => (
+                        <span key={f} className="inline-flex items-center gap-1 bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded">
+                          {f}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedForms(prev => prev.filter(x => x !== f));
+                              // Clear error when user removes a form and there are no forms left
+                              if (selectedForms.length === 1 && errors.form) {
+                                setErrors(prev => ({ ...prev, form: '' }));
+                              }
+                            }}
+                            className="text-blue-600 hover:text-blue-800"
+                            aria-label={`Remove ${f}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {/* Input + suggestions */}
+                  <div className="relative forms-dropdown">
+                    <input
+                      type="text"
+                      value={formsSearch}
+                      onChange={(e) => {
+                        setFormsSearch(e.target.value);
+                        setShowFormsDropdown(true);
+                        // Clear error when user starts typing/selecting
+                        if (errors.form) {
+                          setErrors(prev => ({ ...prev, form: '' }));
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const v = formsSearch.trim();
+                          if (v && !selectedForms.includes(v)) {
+                            setSelectedForms(prev => [...prev, v]);
+                            setFormsSearch('');
+                            setShowFormsDropdown(false);
+                            // Clear error when a form is added
+                            if (errors.form) {
+                              setErrors(prev => ({ ...prev, form: '' }));
+                            }
+                          }
+                        }
+                      }}
+                      onFocus={() => setShowFormsDropdown(true)}
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        errors.form ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                      placeholder="Type to search or add (e.g., Tablets, Amp)"
+                      disabled={loading}
+                    />
+                    {showFormsDropdown && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                        {formsSuggestions.length > 0 ? (
+                          formsSuggestions.map((name) => (
+                            <div
+                              key={name}
+                              onClick={() => {
+                                if (!selectedForms.includes(name)) {
+                                  setSelectedForms(prev => [...prev, name]);
+                                  // Clear error when a form is added
+                                  if (errors.form) {
+                                    setErrors(prev => ({ ...prev, form: '' }));
+                                  }
+                                }
+                                setFormsSearch('');
+                                setShowFormsDropdown(false);
+                              }}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                            >
+                              {name}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="px-3 py-2 text-sm text-gray-500">No matches</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Press Enter to add a new form if not found.</p>
+                </div>
                 {errors.form && (
                   <p className="mt-1 text-sm text-red-600">{errors.form}</p>
                 )}
@@ -797,6 +1025,21 @@ export default function ItemForm({
                   placeholder="Enter importer name"
                   disabled={loading}
                 />
+              </div>
+
+              {/* Needs Stamp */}
+              <div className="flex items-center pt-6">
+                <input
+                  id="needs_stamp"
+                  type="checkbox"
+                  checked={formData.needs_stamp}
+                  onChange={(e) => setFormData(prev => ({ ...prev, needs_stamp: e.target.checked }))}
+                  disabled={loading}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="needs_stamp" className="ml-2 block text-sm text-gray-700">
+                  Needs Stamp
+                </label>
               </div>
             </div>
 

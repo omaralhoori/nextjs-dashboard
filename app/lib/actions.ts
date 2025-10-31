@@ -94,6 +94,7 @@ export {
   fetchItemByBarcodeAction,
   fetchItemByIdAction,
   fetchItemWithFilesAction,
+  fetchItemNamesAction,
   createItemAction,
   updateItemAction,
   toggleItemEnabledAction,

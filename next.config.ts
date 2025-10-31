@@ -3,7 +3,10 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   /* config options here */
   experimental: {
-    ppr: 'incremental'
+    ppr: 'incremental',
+    serverActions: {
+      bodySizeLimit: '5mb',
+    },
   },
   images: {
     remotePatterns: [
@@ -20,9 +23,6 @@ const nextConfig: NextConfig = {
         pathname: '/uploads/**',
       },
     ],
-  },
-  serverActions: {
-    bodySizeLimit: '5mb',
   },
 };
 

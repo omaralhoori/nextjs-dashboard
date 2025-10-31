@@ -165,6 +165,56 @@ export async function fetchItemStatsAction() {
   }
 }
 
+// Fetch previous item names for suggestions
+export async function fetchItemNamesAction(search: string, limit = 10): Promise<string[] | { error: string }> {
+  try {
+    const headers = await getAuthHeaders();
+
+    const queryParams = new URLSearchParams();
+    queryParams.append('search', search ?? '');
+    queryParams.append('limit', String(limit));
+
+    const url = `${API_BASE_URL}/items/names?${queryParams.toString()}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) return { error: 'UNAUTHORIZED' };
+      if (response.status === 403) return { error: 'PERMISSION_DENIED' };
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    // Normalize various possible response shapes to a string[]
+    let names: string[] = [];
+    if (Array.isArray(data)) {
+      // Could be ["Paracetamol", { name: "..." }]
+      names = data
+        .map((n: any) => typeof n === 'string' ? n : (n?.item_name || n?.name || n?.title))
+        .filter((v: any) => typeof v === 'string');
+    } else if (Array.isArray((data as any)?.names)) {
+      names = (data as any).names
+        .map((n: any) => typeof n === 'string' ? n : (n?.item_name || n?.name || n?.title))
+        .filter((v: any) => typeof v === 'string');
+    } else if (Array.isArray((data as any)?.items)) {
+      names = (data as any).items
+        .map((n: any) => n?.item_name || n?.name || n?.title)
+        .filter((v: any) => typeof v === 'string');
+    } else if (Array.isArray((data as any)?.results)) {
+      names = (data as any).results
+        .map((n: any) => typeof n === 'string' ? n : (n?.item_name || n?.name || n?.title))
+        .filter((v: any) => typeof v === 'string');
+    }
+    return names;
+  } catch (error) {
+    console.error('Error fetching item names:', error);
+    return { error: 'NETWORK_ERROR' };
+  }
+}
+
 export async function fetchItemByBarcodeAction(barcode: string) {
   try {
     const headers = await getAuthHeaders();
