@@ -152,7 +152,7 @@ export default function ItemsTable({
                   Item Name
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
-                  Generic Name
+                  Arabic Name
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
                   Barcode
@@ -195,9 +195,22 @@ export default function ItemsTable({
                           </div>
                       <div className="text-gray-500 text-xs">
                         {Array.isArray(item.forms) && item.forms.length > 0
-                          ? (item.forms as any[]).map((f) => (typeof f === 'string' ? f : (f?.id ?? ''))).filter(Boolean).join(', ')
+                          ? (item.forms as any[]).map((f) => {
+                              // Handle different possible structures: 
+                              // API: { form_id: "Amp", volume: "300mg", form: { id: "Amp" } }
+                              // Simple: { id: "Amp", volume: "300mg" }
+                              // String: "Amp"
+                              const formId = typeof f === 'string' 
+                                ? f 
+                                : (f?.form?.id ?? f?.form_id ?? f?.id ?? '');
+                              const formVolume = typeof f === 'object' && f?.volume && f.volume !== null 
+                                ? ` (${f.volume})` 
+                                : '';
+                              return `${formId}${formVolume}`;
+                            }).filter(Boolean).join(', ')
                           : item.form}
-                        {item.volume ? ` • ${item.volume}` : ''}
+                        {/* Legacy volume field - only show if no forms with volumes */}
+                        {(!Array.isArray(item.forms) || item.forms.length === 0) && item.volume ? ` • ${item.volume}` : ''}
                       </div>
                         </div>
                       </div>

@@ -47,7 +47,6 @@ export default function ItemForm({
     currency: '',
     form: '',
     quantity: '1',
-    volume: '',
     usage: '',
     importer: '',
     drug_class: 'OTC' as 'OTC' | 'RX' | 'Controlled',
@@ -61,7 +60,7 @@ export default function ItemForm({
   const [formsSearch, setFormsSearch] = useState('');
   const [showFormsDropdown, setShowFormsDropdown] = useState(false);
   const [formsSuggestions, setFormsSuggestions] = useState<string[]>([]);
-  const [selectedForms, setSelectedForms] = useState<string[]>([]);
+  const [selectedForms, setSelectedForms] = useState<Array<{ id: string; volume?: string }>>([]);
   const [itemNameSearch, setItemNameSearch] = useState('');
   const [showItemNameDropdown, setShowItemNameDropdown] = useState(false);
   const [itemNameSuggestions, setItemNameSuggestions] = useState<string[]>([]);
@@ -90,7 +89,6 @@ export default function ItemForm({
         currency: item.currency || '',
         form: item.form || '',
         quantity: item.quantity?.toString() || '1',
-        volume: item.volume || '',
         usage: item.usage || '',
         importer: item.importer || '',
         drug_class: item.drug_class || 'OTC',
@@ -99,10 +97,23 @@ export default function ItemForm({
         needs_stamp: item.needs_stamp ?? false,
       });
       setItemNameSearch(item.item_name || '');
-      // Initialize selected forms from item
-      const initialForms: string[] = Array.isArray(item.forms) && item.forms.length > 0
-        ? item.forms.map((f: any) => (typeof f === 'string' ? f : (f?.id ?? '') )).filter(Boolean)
-        : (item.form ? [item.form] : []);
+      // Initialize selected forms from item with volume support
+      // API returns forms as: [{ form_id: "Amp", volume: "300mg", form: { id: "Amp" } }]
+      const initialForms: Array<{ id: string; volume?: string }> = Array.isArray(item.forms) && item.forms.length > 0
+        ? item.forms.map((f: any) => {
+            // Handle different possible structures
+            if (typeof f === 'string') {
+              return { id: f };
+            }
+            // API structure: { form_id: "Amp", volume: "300mg", form: { id: "Amp" } }
+            const formId = f?.form?.id ?? f?.form_id ?? f?.id ?? '';
+            const volume = f?.volume && f.volume !== null ? String(f.volume) : undefined;
+            return {
+              id: formId,
+              volume: volume || undefined,
+            };
+          }).filter((f) => f.id)
+        : (item.form ? [{ id: item.form }] : []);
       setSelectedForms(initialForms);
       setFormsSearch('');
     } else {
@@ -118,7 +129,6 @@ export default function ItemForm({
         currency: '',
         form: '',
         quantity: '1',
-        volume: '',
         usage: '',
         importer: '',
         drug_class: 'OTC',
@@ -264,9 +274,7 @@ export default function ItemForm({
       newErrors.item_name = 'Item name is required';
     }
 
-    if (!formData.barcode.trim()) {
-      newErrors.barcode = 'Barcode is required';
-    }
+    // Barcode is optional - no validation needed
 
     if (!formData.buying_price || isNaN(Number(formData.buying_price))) {
       newErrors.buying_price = 'Valid buying price is required';
@@ -311,16 +319,18 @@ export default function ItemForm({
         item_group: formData.item_group,
         item_name: formData.item_name.trim(),
         generic_name: formData.generic_name.trim() || undefined,
-        barcode: formData.barcode.trim(),
+        barcode: formData.barcode.trim() || undefined,
         barcode2: formData.barcode2.trim() || undefined,
         buying_price: Number(formData.buying_price),
         selling_price: Number(formData.selling_price),
         currency: formData.currency,
         // Send legacy single form only when no multi forms selected
         form: selectedForms.length === 0 ? formData.form.trim() : undefined,
-        forms: selectedForms.length > 0 ? selectedForms : undefined,
+        forms: selectedForms.length > 0 ? selectedForms.map(f => ({
+          id: f.id,
+          ...(f.volume && f.volume.trim() ? { volume: f.volume.trim() } : {})
+        })) : undefined,
         quantity: Number(formData.quantity),
-        volume: formData.volume.trim() || undefined,
         usage: formData.usage.trim() || undefined,
         importer: formData.importer.trim() || undefined,
         drug_class: formData.drug_class,
@@ -349,7 +359,6 @@ export default function ItemForm({
       currency: '',
       form: '',
       quantity: '1',
-      volume: '',
       usage: '',
       importer: '',
       drug_class: 'OTC',
@@ -623,10 +632,10 @@ export default function ItemForm({
                 )}
               </div>
 
-              {/* Generic Name */}
+              {/* Arabic Name */}
               <div>
                 <label htmlFor="generic_name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Generic Name
+                  Arabic Name
                 </label>
                 <input
                   type="text"
@@ -634,7 +643,7 @@ export default function ItemForm({
                   value={formData.generic_name}
                   onChange={(e) => handleInputChange('generic_name', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter generic name"
+                  placeholder="Enter Arabic name"
                   disabled={loading}
                 />
               </div>
@@ -645,27 +654,41 @@ export default function ItemForm({
                   Forms *
                 </label>
                 <div className={`border rounded-md p-2 ${errors.form ? 'border-red-300' : 'border-gray-300'}`}>
-                  {/* Selected chips */}
+                  {/* Selected forms with volume inputs */}
                   {selectedForms.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {selectedForms.map((f) => (
-                        <span key={f} className="inline-flex items-center gap-1 bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded">
-                          {f}
+                    <div className="space-y-2 mb-2">
+                      {selectedForms.map((formItem, index) => (
+                        <div key={`${formItem.id}-${index}`} className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-200">
+                          <div className="flex-1">
+                            <div className="font-medium text-sm text-gray-700">{formItem.id}</div>
+                            <input
+                              type="text"
+                              value={formItem.volume || ''}
+                              onChange={(e) => {
+                                const updatedForms = [...selectedForms];
+                                updatedForms[index] = { ...formItem, volume: e.target.value };
+                                setSelectedForms(updatedForms);
+                              }}
+                              className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Volume (e.g., 100mg, 10ml)"
+                              disabled={loading}
+                            />
+                          </div>
                           <button
                             type="button"
                             onClick={() => {
-                              setSelectedForms(prev => prev.filter(x => x !== f));
+                              setSelectedForms(prev => prev.filter((_, i) => i !== index));
                               // Clear error when user removes a form and there are no forms left
                               if (selectedForms.length === 1 && errors.form) {
                                 setErrors(prev => ({ ...prev, form: '' }));
                               }
                             }}
-                            className="text-blue-600 hover:text-blue-800"
-                            aria-label={`Remove ${f}`}
+                            className="text-red-600 hover:text-red-800 text-lg font-bold"
+                            aria-label={`Remove ${formItem.id}`}
                           >
                             ×
                           </button>
-                        </span>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -686,8 +709,8 @@ export default function ItemForm({
                         if (e.key === 'Enter') {
                           e.preventDefault();
                           const v = formsSearch.trim();
-                          if (v && !selectedForms.includes(v)) {
-                            setSelectedForms(prev => [...prev, v]);
+                          if (v && !selectedForms.some(f => f.id === v)) {
+                            setSelectedForms(prev => [...prev, { id: v }]);
                             setFormsSearch('');
                             setShowFormsDropdown(false);
                             // Clear error when a form is added
@@ -711,8 +734,8 @@ export default function ItemForm({
                             <div
                               key={name}
                               onClick={() => {
-                                if (!selectedForms.includes(name)) {
-                                  setSelectedForms(prev => [...prev, name]);
+                                if (!selectedForms.some(f => f.id === name)) {
+                                  setSelectedForms(prev => [...prev, { id: name }]);
                                   // Clear error when a form is added
                                   if (errors.form) {
                                     setErrors(prev => ({ ...prev, form: '' }));
@@ -732,28 +755,13 @@ export default function ItemForm({
                       </div>
                     )}
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Press Enter to add a new form if not found.</p>
+                  <p className="mt-1 text-xs text-gray-500">Press Enter to add a new form if not found. You can add volume for each form after selecting it.</p>
                 </div>
                 {errors.form && (
                   <p className="mt-1 text-sm text-red-600">{errors.form}</p>
                 )}
               </div>
 
-              {/* Volume */}
-              <div>
-                <label htmlFor="volume" className="block text-sm font-medium text-gray-700 mb-1">
-                  Volume
-                </label>
-                <input
-                  type="text"
-                  id="volume"
-                  value={formData.volume}
-                  onChange={(e) => handleInputChange('volume', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., 500mg, 10ml"
-                  disabled={loading}
-                />
-              </div>
             </div>
 
             {/* Pricing & Inventory */}
@@ -948,7 +956,7 @@ export default function ItemForm({
               {/* Primary Barcode */}
               <div>
                 <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 mb-1">
-                  Primary Barcode *
+                  Primary Barcode
                 </label>
                 <input
                   type="text"

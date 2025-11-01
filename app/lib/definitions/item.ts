@@ -11,7 +11,7 @@ export interface Item {
   selling_price: number;
   currency: string;
   form: string; // legacy single form
-  forms?: Array<{ id: string } | string>; // new multi-forms support
+  forms?: Array<{ id: string; volume?: string } | string>; // new multi-forms support with optional volume
   quantity: number;
   volume?: string | null;
   usage?: string | null;
@@ -106,7 +106,7 @@ export interface CreateItemRequest {
   selling_price: number;
   currency: string;
   form?: string; // optional when using forms[]
-  forms?: string[];
+  forms?: Array<{ id: string; volume?: string }>;
   quantity?: number;
   volume?: string;
   usage?: string;
@@ -128,7 +128,7 @@ export interface UpdateItemRequest {
   selling_price?: number;
   currency?: string;
   form?: string;
-  forms?: string[];
+  forms?: Array<{ id: string; volume?: string }>;
   quantity?: number;
   volume?: string;
   usage?: string;
