@@ -41,7 +41,7 @@ export async function fetchItemsAction(filters?: ItemSearchFilters) {
     if (filters?.offset) queryParams.append('offset', filters.offset.toString());
 
     const queryString = queryParams.toString();
-    const url = queryString ? `${API_BASE_URL}/items?${queryString}` : `${API_BASE_URL}/items`;
+    const url = queryString ? `${API_BASE_URL}/items/search?${queryString}` : `${API_BASE_URL}/items`;
     
     const response = await fetch(url, {
       method: 'GET',

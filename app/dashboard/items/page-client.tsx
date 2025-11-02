@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDebouncedCallback } from 'use-debounce';
 import { 
   fetchItemsAction, 
   createItemAction, 
@@ -17,6 +18,7 @@ import {
 import ItemsTable from '@/app/ui/items/items-table';
 import ItemForm from '@/app/ui/items/item-form';
 import PermissionError from '@/app/ui/permission-error';
+import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import type { Item, CreateItemRequest, UpdateItemRequest } from '@/app/lib/definitions/item';
 import type { Manufacturer } from '@/app/lib/definitions/manufacturer';
 import type { ItemGroup } from '@/app/lib/definitions/item-group';
@@ -35,16 +37,44 @@ export default function ItemsPageClient() {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [totalItems, setTotalItems] = useState(0);
+  
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  // Debounce search input
+  const debouncedSearch = useDebouncedCallback((term: string) => {
+    setDebouncedSearchTerm(term);
+    setCurrentPage(1); // Reset to page 1 when search changes
+  }, 300);
 
   useEffect(() => {
     fetchAllData();
-  }, []);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm]);
 
   const fetchAllData = async () => {
     setLoading(true);
     setError(null);
     
     try {
+      const offset = (currentPage - 1) * itemsPerPage;
+      
+      // Build filters for items
+      const itemsFilters: any = {
+        limit: itemsPerPage,
+        offset,
+      };
+      
+      // Add search if provided
+      if (debouncedSearchTerm.trim()) {
+        itemsFilters.search = debouncedSearchTerm.trim();
+      }
+      
       // Fetch all required data in parallel
       const [
         itemsResult,
@@ -53,7 +83,7 @@ export default function ItemsPageClient() {
         currenciesResult,
         warehousesResult
       ] = await Promise.all([
-        fetchItemsAction(),
+        fetchItemsAction(itemsFilters),
         fetchManufacturersAction(),
         fetchItemGroupsAction(),
         fetchCurrenciesAction(),
@@ -84,6 +114,7 @@ export default function ItemsPageClient() {
 
       // Set data
       setItems(itemsResult.items);
+      setTotalItems(itemsResult.total || itemsResult.items.length);
       setManufacturers(manufacturersResult.manufacturers);
       setItemGroups(itemGroupsResult.itemGroups);
       setCurrencies(currenciesResult.currencies);
@@ -189,8 +220,28 @@ export default function ItemsPageClient() {
 
   return (
     <main>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Items</h1>
+      </div>
+
+      {/* Search Box */}
+      <div className="mb-6">
+        <div className="relative flex flex-1 flex-shrink-0">
+          <label htmlFor="search" className="sr-only">
+            Search items
+          </label>
+          <input
+            id="search"
+            className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-gray-500 focus:ring-2 focus:ring-[#007476] focus:border-[#007476]"
+            placeholder="Search items by name, barcode, Arabic name..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              debouncedSearch(e.target.value);
+            }}
+          />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-[#007476]" />
+        </div>
       </div>
 
       {/* Success/Error Messages */}
@@ -231,6 +282,120 @@ export default function ItemsPageClient() {
         onToggleEnabled={handleToggleEnabled}
         onCreateNew={handleCreateNew}
       />
+
+      {/* Pagination */}
+      {totalItems > 0 && (
+        <div className="mt-6 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+          <div className="flex flex-1 justify-between sm:hidden">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalItems / itemsPerPage), prev + 1))}
+              disabled={currentPage >= Math.ceil(totalItems / itemsPerPage)}
+              className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
+                <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalItems)}</span> of{' '}
+                <span className="font-medium">{totalItems}</span> results
+              </p>
+            </div>
+            <div>
+              <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Previous</span>
+                  <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+                </button>
+                {(() => {
+                  const totalPages = Math.ceil(totalItems / itemsPerPage);
+                  const pages: (number | string)[] = [];
+                  
+                  if (totalPages <= 7) {
+                    // Show all pages if 7 or less
+                    for (let i = 1; i <= totalPages; i++) {
+                      pages.push(i);
+                    }
+                  } else {
+                    if (currentPage <= 4) {
+                      // Show first 5 pages
+                      for (let i = 1; i <= 5; i++) {
+                        pages.push(i);
+                      }
+                      pages.push('...');
+                      pages.push(totalPages);
+                    } else if (currentPage >= totalPages - 3) {
+                      // Show last 5 pages
+                      pages.push(1);
+                      pages.push('...');
+                      for (let i = totalPages - 4; i <= totalPages; i++) {
+                        pages.push(i);
+                      }
+                    } else {
+                      // Show middle pages
+                      pages.push(1);
+                      pages.push('...');
+                      for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+                        pages.push(i);
+                      }
+                      pages.push('...');
+                      pages.push(totalPages);
+                    }
+                  }
+                  
+                  return pages.map((page, index) => {
+                    if (page === '...') {
+                      return (
+                        <span
+                          key={`ellipsis-${index}`}
+                          className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                    
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page as number)}
+                        className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                          currentPage === page
+                            ? 'z-10 bg-[#007476] text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2'
+                            : 'text-gray-900'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  });
+                })()}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(totalItems / itemsPerPage), prev + 1))}
+                  disabled={currentPage >= Math.ceil(totalItems / itemsPerPage)}
+                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Next</span>
+                  <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Item Form Modal */}
       <ItemForm

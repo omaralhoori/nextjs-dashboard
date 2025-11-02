@@ -395,9 +395,7 @@ export default function ItemForm({
 
   // Filter manufacturers based on search
   const filteredManufacturers = manufacturers.filter(manufacturer =>
-    manufacturer.name.toLowerCase().includes(manufacturerSearch.toLowerCase()) ||
-    manufacturer.code.toLowerCase().includes(manufacturerSearch.toLowerCase())
-  );
+    manufacturer.name.toLowerCase().includes(manufacturerSearch.toLowerCase()) );
 
   // Filter warehouses based on search
   const filteredWarehouses = warehouses.filter(warehouse =>
