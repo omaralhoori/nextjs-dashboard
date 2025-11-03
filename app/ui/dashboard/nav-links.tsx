@@ -9,6 +9,7 @@ import {
   CurrencyDollarIcon,
   CubeIcon,
   BeakerIcon,
+  MapPinIcon,
   UserGroupIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
@@ -28,6 +29,7 @@ const links = [
   { name: 'Currencies', href: '/dashboard/currencies', icon: CurrencyDollarIcon },
   { name: 'Items', href: '/dashboard/items', icon: CubeIcon },
   { name: 'Active Ingredients', href: '/dashboard/active-ingredients', icon: BeakerIcon },
+  { name: 'Address', href: '/dashboard/address', icon: MapPinIcon },
   { name: 'Profile', href: '/dashboard/profile', icon: UserCircleIcon },
 ];
 

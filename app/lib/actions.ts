@@ -39,12 +39,7 @@ export {
   updateDistrictStatusAction,
 } from '@/app/lib/functions/warehouse-districts';
 
-export {
-  // Address functions
-  fetchStatesAction,
-  fetchCitiesAction,
-  fetchDistrictsAction,
-} from '@/app/lib/functions/address';
+// Address functions exported below after implementation
 
 export {
   // Item Group functions
@@ -100,6 +95,24 @@ export {
   toggleItemEnabledAction,
   deleteItemAction,
 } from '@/app/lib/functions/items';
+
+export {
+  fetchStatesAction,
+  fetchStateDetailsAction,
+  createStateAction,
+  updateStateAction,
+  deleteStateAction,
+  fetchCitiesAction,
+  fetchCityDetailsAction,
+  createCityAction,
+  updateCityAction,
+  deleteCityAction,
+  fetchDistrictsAction,
+  fetchDistrictDetailsAction,
+  createDistrictAction,
+  updateDistrictAction,
+  deleteDistrictAction,
+} from '@/app/lib/functions/address';
 
 export {
   // Active Ingredient functions
