@@ -28,7 +28,7 @@ export type {
 
 // Address types
 export type {
-  AddressState,
+  State as AddressState,
   City,
   District,
   StatesResponse,

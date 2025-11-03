@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { fetchStatesAction, fetchCitiesAction, fetchDistrictsAction } from '@/app/lib/actions';
-import type { AddressState, City, District } from '@/app/lib/definitions/address';
+import type { AddressState, City, District } from '@/app/lib/definitions';
 
 interface DistrictSelectionProps {
   onDistrictSelect: (district: District) => void;
@@ -56,7 +56,7 @@ export default function DistrictSelection({
     setTempSelectedDistricts([]);
     
     try {
-      const result = await fetchCitiesAction(stateId);
+      const result = await fetchCitiesAction({ stateId });
       if ('error' in result) {
         console.error('Error fetching cities:', result.error);
       } else {
@@ -75,7 +75,7 @@ export default function DistrictSelection({
     setTempSelectedDistricts([]);
     
     try {
-      const result = await fetchDistrictsAction(cityId);
+      const result = await fetchDistrictsAction({ cityId });
       if ('error' in result) {
         console.error('Error fetching districts:', result.error);
       } else {

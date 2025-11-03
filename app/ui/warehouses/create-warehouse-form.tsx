@@ -54,7 +54,7 @@ export default function CreateWarehouseForm() {
   useEffect(() => {
     if (selectedState) {
       const loadCities = async () => {
-        const result = await fetchCitiesAction(selectedState);
+        const result = await fetchCitiesAction({ stateId: selectedState });
         if ('error' in result) {
           setMessage({ type: 'error', text: 'Failed to load cities' });
         } else {
@@ -78,7 +78,7 @@ export default function CreateWarehouseForm() {
   useEffect(() => {
     if (selectedCity) {
       const loadDistricts = async () => {
-        const result = await fetchDistrictsAction(selectedCity);
+        const result = await fetchDistrictsAction({ cityId: selectedCity });
         if ('error' in result) {
           setMessage({ type: 'error', text: 'Failed to load districts' });
         } else {
