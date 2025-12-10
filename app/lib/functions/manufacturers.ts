@@ -27,7 +27,7 @@ export async function fetchManufacturersAction() {
   try {
     const headers = await getAuthHeaders();
     
-    const response = await fetch(`${API_BASE_URL}/manufacturers`, {
+    const response = await fetch(`${API_BASE_URL}/manufacturers?limit=500`, {
       method: 'GET',
       headers,
       cache: 'no-store',
