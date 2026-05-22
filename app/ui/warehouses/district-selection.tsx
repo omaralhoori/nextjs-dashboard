@@ -149,7 +149,7 @@ export default function DistrictSelection({
           value={selectedState}
           onChange={(e) => handleStateChange(e.target.value)}
           disabled={disabled || loadingStates}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
           <option value="">Select a state</option>
           {states.map((state) => (
@@ -174,7 +174,7 @@ export default function DistrictSelection({
             value={selectedCity}
             onChange={(e) => handleCityChange(e.target.value)}
             disabled={disabled || loadingCities}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             <option value="">Select a city</option>
             {cities.map((city) => (
@@ -217,7 +217,7 @@ export default function DistrictSelection({
                       checked={isChecked}
                       onChange={() => handleDistrictToggle(district.id)}
                       disabled={disabled || isAlreadyAdded}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
+                      className="rounded border-gray-300 text-blue-600 focus:ring-[#007476] disabled:cursor-not-allowed"
                     />
                     <span className={`text-sm ${isAlreadyAdded ? 'text-gray-500' : 'text-gray-700'}`}>
                       {district.name}
@@ -234,7 +234,7 @@ export default function DistrictSelection({
               <button
                 onClick={handleAddSelectedDistricts}
                 disabled={disabled}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-[#007476] text-white text-sm font-medium rounded-md hover:bg-[#005a5c] focus:outline-none focus:ring-2 focus:ring-[#007476] disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 Add Selected Districts ({tempSelectedDistricts.length})
               </button>

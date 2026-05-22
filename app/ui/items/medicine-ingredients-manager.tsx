@@ -261,7 +261,7 @@ export default function MedicineIngredientsManager({
         </h3>
         <button
           onClick={() => setIsAddFormOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-[#007476] rounded-md hover:bg-[#005a5c]"
         >
           <PlusIcon className="h-4 w-4" />
           Add Ingredient
@@ -354,7 +354,7 @@ export default function MedicineIngredientsManager({
                         }
                       }}
                       onFocus={() => setShowIngredientDropdown(true)}
-                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500"
                       placeholder="Search ingredients..."
                       disabled={formLoading}
                     />
@@ -393,7 +393,7 @@ export default function MedicineIngredientsManager({
                   id="strength"
                   value={strength}
                   onChange={(e) => setStrength(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500"
                   placeholder="e.g., 500mg, 10ml, 2.5%"
                   disabled={formLoading}
                 />
@@ -411,7 +411,7 @@ export default function MedicineIngredientsManager({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#007476] rounded-md hover:bg-[#005a5c] disabled:opacity-50"
                   disabled={formLoading}
                 >
                   {formLoading ? 'Adding...' : 'Add Ingredient'}
@@ -458,7 +458,7 @@ export default function MedicineIngredientsManager({
                   id="editStrength"
                   value={editStrength}
                   onChange={(e) => setEditStrength(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500"
                   placeholder="e.g., 500mg, 10ml, 2.5%"
                   disabled={formLoading}
                 />
@@ -476,7 +476,7 @@ export default function MedicineIngredientsManager({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#007476] rounded-md hover:bg-[#005a5c] disabled:opacity-50"
                   disabled={formLoading}
                 >
                   {formLoading ? 'Updating...' : 'Update Strength'}

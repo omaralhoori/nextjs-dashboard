@@ -117,7 +117,7 @@ export default function ActiveIngredientForm({
               id="active_ingredient_name"
               value={formData.active_ingredient_name}
               onChange={(e) => handleInputChange('active_ingredient_name', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                 errors.active_ingredient_name ? 'border-red-300' : 'border-gray-300'
               }`}
               placeholder="Enter active ingredient name"
@@ -140,7 +140,7 @@ export default function ActiveIngredientForm({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-[#007476] rounded-md hover:bg-[#005a5c] focus:outline-none focus:ring-2 focus:ring-[#007476] disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Saving...' : (isEditing ? 'Update' : 'Create')}

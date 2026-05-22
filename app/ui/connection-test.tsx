@@ -33,7 +33,7 @@ export default function ConnectionTest() {
       <button
         onClick={testConnection}
         disabled={loading}
-        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+        className="bg-[#007476] text-white px-4 py-2 rounded-md hover:bg-[#005a5c] disabled:opacity-50"
       >
         {loading ? 'Testing...' : 'Test Connection'}
       </button>

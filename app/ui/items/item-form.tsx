@@ -497,7 +497,7 @@ export default function ItemForm({
                   setShowItemNameDropdown(true);
                 }}
                 onFocus={() => setShowItemNameDropdown(true)}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                   errors.item_name ? 'border-red-300' : 'border-gray-300'
                 }`}
                 placeholder="Enter or select item name"
@@ -548,7 +548,7 @@ export default function ItemForm({
                         }
                       }}
                       onFocus={() => setShowManufacturerDropdown(true)}
-                      className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                         errors.manufacturer_id ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Search manufacturers..."
@@ -592,7 +592,7 @@ export default function ItemForm({
                   id="item_group"
                   value={formData.item_group}
                   onChange={(e) => handleInputChange('item_group', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                     errors.item_group ? 'border-red-300' : 'border-gray-300'
                   }`}
                   disabled={loading}
@@ -619,7 +619,7 @@ export default function ItemForm({
                   id="item_name"
                   value={formData.item_name}
                   onChange={(e) => handleInputChange('item_name', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                     errors.item_name ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="Enter item name"
@@ -640,7 +640,7 @@ export default function ItemForm({
                   id="generic_name"
                   value={formData.generic_name}
                   onChange={(e) => handleInputChange('generic_name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500"
                   placeholder="Enter Arabic name"
                   disabled={loading}
                 />
@@ -667,7 +667,7 @@ export default function ItemForm({
                                 updatedForms[index] = { ...formItem, volume: e.target.value };
                                 setSelectedForms(updatedForms);
                               }}
-                              className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full mt-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#007476] focus:border-blue-500"
                               placeholder="Volume (e.g., 100mg, 10ml)"
                               disabled={loading}
                             />
@@ -719,7 +719,7 @@ export default function ItemForm({
                         }
                       }}
                       onFocus={() => setShowFormsDropdown(true)}
-                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                         errors.form ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Type to search or add (e.g., Tablets, Amp)"
@@ -784,7 +784,7 @@ export default function ItemForm({
                         }
                       }}
                       onFocus={() => setShowCurrencyDropdown(true)}
-                      className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                         errors.currency ? 'border-red-300' : 'border-gray-300'
                       }`}
                       placeholder="Search currencies..."
@@ -831,7 +831,7 @@ export default function ItemForm({
                   onChange={(e) => handleInputChange('buying_price', e.target.value)}
                   step="0.01"
                   min="0"
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                     errors.buying_price ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="0.00"
@@ -854,7 +854,7 @@ export default function ItemForm({
                   onChange={(e) => handleInputChange('selling_price', e.target.value)}
                   step="0.01"
                   min="0"
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                     errors.selling_price ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="0.00"
@@ -876,7 +876,7 @@ export default function ItemForm({
                   value={formData.quantity}
                   onChange={(e) => handleInputChange('quantity', e.target.value)}
                   min="1"
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                     errors.quantity ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="1"
@@ -905,7 +905,7 @@ export default function ItemForm({
                         }
                       }}
                       onFocus={() => setShowWarehouseDropdown(true)}
-                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500"
                       placeholder="Search warehouses..."
                       disabled={loading}
                     />
@@ -961,7 +961,7 @@ export default function ItemForm({
                   id="barcode"
                   value={formData.barcode}
                   onChange={(e) => handleInputChange('barcode', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                     errors.barcode ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="Enter primary barcode"
@@ -982,7 +982,7 @@ export default function ItemForm({
                   id="barcode2"
                   value={formData.barcode2}
                   onChange={(e) => handleInputChange('barcode2', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500"
                   placeholder="Enter secondary barcode"
                   disabled={loading}
                 />
@@ -1003,7 +1003,7 @@ export default function ItemForm({
                   id="drug_class"
                   value={formData.drug_class}
                   onChange={(e) => handleInputChange('drug_class', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                     errors.drug_class ? 'border-red-300' : 'border-gray-300'
                   }`}
                   disabled={loading}
@@ -1027,7 +1027,7 @@ export default function ItemForm({
                   id="importer"
                   value={formData.importer}
                   onChange={(e) => handleInputChange('importer', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500"
                   placeholder="Enter importer name"
                   disabled={loading}
                 />
@@ -1041,7 +1041,7 @@ export default function ItemForm({
                   checked={formData.needs_stamp}
                   onChange={(e) => setFormData(prev => ({ ...prev, needs_stamp: e.target.checked }))}
                   disabled={loading}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-600 focus:ring-[#007476] border-gray-300 rounded"
                 />
                 <label htmlFor="needs_stamp" className="ml-2 block text-sm text-gray-700">
                   Needs Stamp
@@ -1059,7 +1059,7 @@ export default function ItemForm({
                 value={formData.drug_class_description}
                 onChange={(e) => handleInputChange('drug_class_description', e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500"
                 placeholder="Enter drug class description"
                 disabled={loading}
               />
@@ -1075,7 +1075,7 @@ export default function ItemForm({
                 value={formData.usage}
                 onChange={(e) => handleInputChange('usage', e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500"
                 placeholder="Enter usage instructions"
                 disabled={loading}
               />
@@ -1088,14 +1088,14 @@ export default function ItemForm({
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007476]"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-[#007476] border border-transparent rounded-md hover:bg-[#005a5c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007476] disabled:opacity-50"
             >
               {loading ? (
                 <div className="flex items-center">

@@ -132,7 +132,7 @@ export default function ItemGroupForm({
               id="name"
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                 errors.name ? 'border-red-300' : 'border-gray-300'
               }`}
               placeholder="Enter item group name"
@@ -153,7 +153,7 @@ export default function ItemGroupForm({
               value={formData.description}
               onChange={(e) => handleInputChange('description', e.target.value)}
               rows={3}
-              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                 errors.description ? 'border-red-300' : 'border-gray-300'
               }`}
               placeholder="Enter item group description"
@@ -171,7 +171,7 @@ export default function ItemGroupForm({
                 type="checkbox"
                 checked={formData.active}
                 onChange={(e) => handleInputChange('active', e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 focus:ring-[#007476] border-gray-300 rounded"
                 disabled={loading}
               />
               <span className="ml-2 text-sm text-gray-700">Active</span>
@@ -187,14 +187,14 @@ export default function ItemGroupForm({
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007476]"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-[#007476] border border-transparent rounded-md hover:bg-[#005a5c] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#007476] disabled:opacity-50"
             >
               {loading ? (
                 <div className="flex items-center">

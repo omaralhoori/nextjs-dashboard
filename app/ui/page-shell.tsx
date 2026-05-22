@@ -64,7 +64,7 @@ export default function PageShell({
   children,
 }: PageShellProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mt-4 md:mt-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>

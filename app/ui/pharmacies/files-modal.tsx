@@ -128,7 +128,7 @@ export default function PharmacyFilesModal({ pharmacyId, pharmacyName, isOpen, o
             <div className="text-center py-8">
               <button
                 onClick={loadFiles}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                className="bg-[#007476] text-white px-4 py-2 rounded-md hover:bg-[#005a5c]"
               >
                 Load Files
               </button>
@@ -148,7 +148,7 @@ export default function PharmacyFilesModal({ pharmacyId, pharmacyName, isOpen, o
               <p className="text-red-600 mb-4">{error}</p>
               <button
                 onClick={loadFiles}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                className="bg-[#007476] text-white px-4 py-2 rounded-md hover:bg-[#005a5c]"
               >
                 Try Again
               </button>
@@ -245,7 +245,7 @@ export default function PharmacyFilesModal({ pharmacyId, pharmacyName, isOpen, o
                           <button
                             onClick={() => handleDownload(file)}
                             disabled={downloadingFiles.has(file.id)}
-                            className="flex items-center space-x-1 bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 disabled:opacity-50"
+                            className="flex items-center space-x-1 bg-[#007476] text-white px-3 py-1 rounded-md hover:bg-[#005a5c] disabled:opacity-50"
                           >
                             <ArrowDownTrayIcon className="h-4 w-4" />
                             <span>{downloadingFiles.has(file.id) ? 'Downloading...' : 'Download'}</span>

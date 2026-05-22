@@ -49,12 +49,17 @@ export default function PharmaciesPageClient() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const result = await fetchAllPharmaciesAction(1, 500);
-    if ('error' in result) {
-      setPermError(result.error);
-    } else {
-      setAllItems(result.pharmacies);
+    let all: PharmacyWithUsers[] = [];
+    let p = 1;
+    let hasMore = true;
+    while (hasMore) {
+      const result = await fetchAllPharmaciesAction(p, 100);
+      if ('error' in result) { setPermError(result.error); setLoading(false); return; }
+      all = [...all, ...result.pharmacies];
+      hasMore = p < result.totalPages;
+      p++;
     }
+    setAllItems(all);
     setLoading(false);
   }, []);
 
