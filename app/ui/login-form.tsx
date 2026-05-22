@@ -34,11 +34,11 @@ function SyrianFlag({ size = 20 }: { size?: number }) {
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="rounded-sm flex-shrink-0">
       {/* Black top */}
-      <rect y={0} width={w} height={stripe} fill="#000000" />
+      <rect y={stripe * 2} width={w} height={stripe} fill="#000000" />
       {/* White middle */}
       <rect y={stripe} width={w} height={stripe} fill="#ffffff" />
       {/* Green bottom */}
-      <rect y={stripe * 2} width={w} height={stripe} fill="#007A3D" />
+      <rect y={0} width={w} height={stripe} fill="#007A3D" />
       {/* 3 red stars in the white band */}
       {starPositions.map((cx) => star(cx, starY))}
     </svg>
