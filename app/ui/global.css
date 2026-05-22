@@ -16,3 +16,18 @@ input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pharma theme focus ring */
+.focus-pharma:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #007476;
+}

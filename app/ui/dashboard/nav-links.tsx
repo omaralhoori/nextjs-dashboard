@@ -17,8 +17,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 
-// Map of links to display in the side navigation.
-// Depending on the size of the application, this would be stored in a database.
 const links = [
   { name: 'Home', href: '/dashboard', icon: HomeIcon },
   { name: 'Pharmacies', href: '/dashboard/pharmacies', icon: BuildingOfficeIcon },
@@ -33,26 +31,36 @@ const links = [
   { name: 'Profile', href: '/dashboard/profile', icon: UserCircleIcon },
 ];
 
-export default function NavLinks() {
+interface NavLinksProps {
+  collapsed?: boolean;
+  onLinkClick?: () => void;
+}
+
+export default function NavLinks({ collapsed = false, onLinkClick }: NavLinksProps) {
   const pathname = usePathname();
+
   return (
     <>
       {links.map((link) => {
         const LinkIcon = link.icon;
+        const isActive = pathname === link.href;
+
         return (
           <Link
             key={link.name}
             href={link.href}
+            onClick={onLinkClick}
+            title={collapsed ? link.name : undefined}
             className={clsx(
-              "flex h-[48px] grow items-center justify-center gap-2 rounded-md bg-gray-50 p-3 text-sm font-medium hover:bg-gray-100 md:flex-none md:justify-start md:p-2 md:px-3",
-              {
-                "bg-gray-100": pathname === link.href,
-              }
+              'flex h-[42px] items-center gap-3 rounded-lg text-sm font-medium transition-all',
+              collapsed ? 'justify-center px-1' : 'justify-start px-3',
+              isActive
+                ? 'bg-white/25 text-white shadow-sm'
+                : 'text-white/75 hover:bg-white/15 hover:text-white',
             )}
-            style={pathname === link.href ? { color: '#007476' } : {}}
           >
-            <LinkIcon className="w-6" />
-            <p className="hidden md:block">{link.name}</p>
+            <LinkIcon className={clsx('w-5 h-5 flex-shrink-0', isActive ? 'text-white' : 'text-white/70')} />
+            {!collapsed && <span className="truncate">{link.name}</span>}
           </Link>
         );
       })}

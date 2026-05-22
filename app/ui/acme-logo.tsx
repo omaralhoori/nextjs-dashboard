@@ -1,9 +1,23 @@
 import Image from 'next/image';
 
-export default function AcmeLogo() {
+interface AcmeLogoProps {
+  size?: 'sm' | 'md' | 'lg';
+}
+
+export default function AcmeLogo({ size = 'md' }: AcmeLogoProps) {
+  const dimensions = { sm: 80, md: 110, lg: 150 };
+  const px = dimensions[size];
+
   return (
-    <div style={{ backgroundColor: '#fff', borderRadius: '10px'}}>
-      <Image src="/pharamlogo.png" alt="PharmaSERV" width={100} height={100} className="w-full h-full" />
+    <div className="flex items-center justify-center">
+      <Image
+        src="/logo.png"
+        alt="PharmaSERV"
+        width={px}
+        height={px}
+        className="object-contain drop-shadow-md"
+        priority
+      />
     </div>
   );
 }

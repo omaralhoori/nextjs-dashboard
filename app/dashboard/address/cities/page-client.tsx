@@ -1,128 +1,185 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import PageShell from '@/app/ui/page-shell';
+import {
+  DataTable, TableSkeleton, PaginationBar,
+  FilterBar, SearchInput, FilterSelect, ActionBtn,
+} from '@/app/ui/data-table';
+import CityForm from '@/app/ui/address/city-form';
+import PermissionError from '@/app/ui/permission-error';
 import {
   fetchStatesAction,
   fetchCitiesAction,
   createCityAction,
   updateCityAction,
   deleteCityAction,
-} from '@/app/lib/actions';
+} from '@/app/lib/functions/address';
 import type { State, City } from '@/app/lib/definitions/address';
-import CitiesTable from '@/app/ui/address/cities-table';
-import CityForm from '@/app/ui/address/city-form';
-import PermissionError from '@/app/ui/permission-error';
+import { formatDateToLocal } from '@/app/lib/utils';
+
+const PAGE_SIZE = 20;
 
 export default function CitiesPageClient() {
   const [states, setStates] = useState<State[]>([]);
   const [cities, setCities] = useState<City[]>([]);
-  const [selectedStateId, setSelectedStateId] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [permError, setPermError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [stateFilter, setStateFilter] = useState('');
+  const [page, setPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingCity, setEditingCity] = useState<City | null>(null);
+  const [editingItem, setEditingItem] = useState<City | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  const loadStates = async () => {
+  const loadStates = useCallback(async () => {
     const res = await fetchStatesAction();
-    if ('error' in res) {
-      setError(res.error);
-      return;
-    }
-    setStates(res.states);
-  };
+    if (!('error' in res)) setStates(res.states);
+  }, []);
 
-  const loadCities = async (stateId?: string) => {
-    const res = await fetchCitiesAction({ stateId });
-    if ('error' in res) {
-      setError(res.error);
-      return;
-    }
-    setCities(res.cities);
-  };
-
-  const loadAll = async () => {
+  const loadCities = useCallback(async () => {
     setLoading(true);
-    setError(null);
-    await loadStates();
-    await loadCities(selectedStateId || undefined);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedStateId]);
-
-  const handleCreateNew = () => {
-    setEditingCity(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEdit = (city: City) => {
-    setEditingCity(city);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = async (cityId: string) => {
-    const res = await deleteCityAction(cityId);
-    if (!res.success) {
-      setError(res.message);
-      return;
+    const res = await fetchCitiesAction({ stateId: stateFilter || undefined });
+    if ('error' in res) {
+      setPermError(res.error as string);
+    } else {
+      setCities(res.cities);
     }
-    await loadCities(selectedStateId || undefined);
-  };
+    setLoading(false);
+  }, [stateFilter]);
+
+  useEffect(() => { loadStates(); }, [loadStates]);
+  useEffect(() => { loadCities(); }, [loadCities]);
+
+  const filtered = cities.filter(c =>
+    !search || c.name.toLowerCase().includes(search.toLowerCase())
+  );
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const stateOptions = [
+    { value: '', label: 'All States' },
+    ...states.map(s => ({ value: s.id, label: s.name })),
+  ];
+
+  const openEdit = (item: City) => { setEditingItem(item); setIsFormOpen(true); };
+  const openCreate = () => { setEditingItem(null); setIsFormOpen(true); };
+  const closeForm = () => { setIsFormOpen(false); setEditingItem(null); };
 
   const handleSubmit = async (payload: { name: string; stateId: string }) => {
     setFormLoading(true);
-    try {
-      if (editingCity) {
-        const res = await updateCityAction(editingCity.id, payload);
-        if (!res.success) setError(res.message);
-      } else {
-        const res = await createCityAction(payload);
-        if (!res.success) setError(res.message);
-      }
-      await loadCities(selectedStateId || undefined);
-      setIsFormOpen(false);
-      setEditingCity(null);
-    } finally {
-      setFormLoading(false);
+    const result = editingItem
+      ? await updateCityAction(editingItem.id, payload)
+      : await createCityAction(payload);
+    if (result.success) {
+      setSuccessMsg(result.message);
+      closeForm();
+      await loadCities();
+    } else {
+      setErrorMsg(result.message);
     }
+    setFormLoading(false);
   };
 
-  if (error) {
-    return <PermissionError errorType={error as 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR'} />;
-  }
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this city?')) return;
+    const result = await deleteCityAction(id);
+    if (result.success) { setSuccessMsg(result.message); await loadCities(); }
+    else setErrorMsg(result.message);
+  };
+
+  if (permError) return <PermissionError errorType={permError as 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR'} />;
+
+  const columns = [
+    {
+      key: 'name',
+      header: 'City Name',
+      render: (row: City) => <span className="font-medium text-gray-900">{row.name}</span>,
+    },
+    {
+      key: 'state',
+      header: 'State',
+      render: (row: City) => <span className="text-sm text-gray-600">{row.stateName ?? '—'}</span>,
+    },
+    {
+      key: 'districts',
+      header: 'Districts',
+      render: (row: City) => <span className="text-sm text-gray-600">{row.districtsCount ?? '—'}</span>,
+    },
+    {
+      key: 'created_at',
+      header: 'Created',
+      render: (row: City) => <span className="text-xs text-gray-500">{formatDateToLocal(row.createdAt)}</span>,
+    },
+    {
+      key: 'actions',
+      header: '',
+      className: 'text-right',
+      render: (row: City) => (
+        <div className="flex justify-end gap-1">
+          <ActionBtn variant="edit" icon={<PencilIcon className="h-4 w-4" />} label="Edit" onClick={() => openEdit(row)} />
+          <ActionBtn variant="delete" icon={<TrashIcon className="h-4 w-4" />} label="Delete" onClick={() => handleDelete(row.id)} />
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <main>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Address - Cities</h1>
-      </div>
-
+    <PageShell
+      title="Cities"
+      count={filtered.length}
+      createLabel="New City"
+      onCreate={openCreate}
+      successMessage={successMsg}
+      errorMessage={errorMsg}
+      onClearSuccess={() => setSuccessMsg(null)}
+      onClearError={() => setErrorMsg(null)}
+      filters={
+        <FilterBar>
+          <SearchInput value={search} onChange={v => { setSearch(v); setPage(1); }} placeholder="Search city name…" />
+          <FilterSelect value={stateFilter} onChange={v => { setStateFilter(v); setPage(1); }} label="State" options={stateOptions} />
+        </FilterBar>
+      }
+    >
       {loading ? (
-        <div className="mt-6 text-gray-600">Loading cities...</div>
+        <TableSkeleton cols={5} rows={5} />
       ) : (
-        <CitiesTable
-          states={states}
-          cities={cities}
-          selectedStateId={selectedStateId}
-          onChangeState={setSelectedStateId}
-          onCreateNew={handleCreateNew}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <div className="space-y-3">
+          <DataTable
+            columns={columns}
+            rows={pageItems}
+            keyExtractor={r => r.id}
+            emptyMessage="No cities found"
+            mobileCard={row => (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900">{row.name}</div>
+                    {row.stateName && <div className="text-xs text-gray-400">{row.stateName}</div>}
+                  </div>
+                  <div className="flex gap-1">
+                    <ActionBtn variant="edit" icon={<PencilIcon className="h-4 w-4" />} label="Edit" onClick={() => openEdit(row)} />
+                    <ActionBtn variant="delete" icon={<TrashIcon className="h-4 w-4" />} label="Delete" onClick={() => handleDelete(row.id)} />
+                  </div>
+                </div>
+                <div className="text-xs text-gray-400">{formatDateToLocal(row.createdAt)}</div>
+              </div>
+            )}
+          />
+          <PaginationBar currentPage={page} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onPageChange={setPage} />
+        </div>
       )}
-
       <CityForm
-        city={editingCity}
+        city={editingItem}
         states={states}
         isOpen={isFormOpen}
         loading={formLoading}
-        onClose={() => { setIsFormOpen(false); setEditingCity(null); }}
+        onClose={closeForm}
         onSubmit={handleSubmit}
       />
-    </main>
+    </PageShell>
   );
 }

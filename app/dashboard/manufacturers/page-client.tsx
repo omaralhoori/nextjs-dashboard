@@ -1,259 +1,239 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { 
-  fetchManufacturersAction, 
-  createManufacturerAction, 
-  updateManufacturerAction, 
-  deleteManufacturerAction, 
-  toggleManufacturerActiveAction 
-} from '@/app/lib/actions';
-import ManufacturersTable from '@/app/ui/manufacturers/manufacturers-table';
+import { useState, useEffect, useCallback } from 'react';
+import { PencilIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import PageShell from '@/app/ui/page-shell';
+import {
+  DataTable, TableSkeleton, PaginationBar,
+  FilterBar, SearchInput, FilterSelect,
+  StatusBadge, ActionBtn,
+} from '@/app/ui/data-table';
 import ManufacturerForm from '@/app/ui/manufacturers/manufacturer-form';
 import PermissionError from '@/app/ui/permission-error';
+import {
+  fetchManufacturersAction,
+  createManufacturerAction,
+  updateManufacturerAction,
+  deleteManufacturerAction,
+  toggleManufacturerActiveAction,
+} from '@/app/lib/functions/manufacturers';
 import type { Manufacturer, CreateManufacturerRequest, UpdateManufacturerRequest } from '@/app/lib/definitions/manufacturer';
+import { formatDateToLocal } from '@/app/lib/utils';
+
+const PAGE_SIZE = 20;
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'All Status' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+];
 
 export default function ManufacturersPageClient() {
-  const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
+  const [items, setItems] = useState<Manufacturer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [permError, setPermError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingManufacturer, setEditingManufacturer] = useState<Manufacturer | null>(null);
+  const [editingItem, setEditingItem] = useState<Manufacturer | null>(null);
   const [formLoading, setFormLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchManufacturers();
+  const load = useCallback(async () => {
+    setLoading(true);
+    const result = await fetchManufacturersAction();
+    if ('error' in result) {
+      setPermError(result.error);
+    } else {
+      setItems(result.manufacturers);
+    }
+    setLoading(false);
   }, []);
 
-  const fetchManufacturers = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await fetchManufacturersAction();
-      
-      if ('error' in result) {
-        setError(result.error);
-      } else {
-        setManufacturers(result.manufacturers);
-      }
-    } catch (err) {
-      console.error('Error fetching manufacturers:', err);
-      setError('NETWORK_ERROR');
-    } finally {
-      setLoading(false);
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = items.filter(item => {
+    if (search) {
+      const q = search.toLowerCase();
+      if (!item.name.toLowerCase().includes(q) && !item.code.toLowerCase().includes(q)) return false;
     }
-  };
+    if (statusFilter === 'active' && !item.active) return false;
+    if (statusFilter === 'inactive' && item.active) return false;
+    return true;
+  });
 
-  const handleCreateNew = () => {
-    setEditingManufacturer(null);
-    setIsFormOpen(true);
-  };
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleEdit = (manufacturer: Manufacturer) => {
-    setEditingManufacturer(manufacturer);
-    setIsFormOpen(true);
-  };
+  const openEdit = (item: Manufacturer) => { setEditingItem(item); setIsFormOpen(true); };
+  const openCreate = () => { setEditingItem(null); setIsFormOpen(true); };
+  const closeForm = () => { setIsFormOpen(false); setEditingItem(null); };
 
   const handleFormSubmit = async (data: CreateManufacturerRequest | UpdateManufacturerRequest) => {
     setFormLoading(true);
-    
-    try {
-      let result;
-      if (editingManufacturer) {
-        result = await updateManufacturerAction(editingManufacturer.id, data);
-      } else {
-        result = await createManufacturerAction(data as CreateManufacturerRequest);
-      }
-      
-      if (result.success) {
-        setMessage(result.message);
-        await fetchManufacturers();
-        setIsFormOpen(false);
-        setEditingManufacturer(null);
-        
-        // Clear message after 3 seconds
-        setTimeout(() => setMessage(null), 3000);
-      } else {
-        setError(result.message);
-      }
-    } catch (err) {
-      console.error('Error submitting form:', err);
-      setError('Failed to save manufacturer');
-    } finally {
-      setFormLoading(false);
+    const result = editingItem
+      ? await updateManufacturerAction(editingItem.id, data)
+      : await createManufacturerAction(data as CreateManufacturerRequest);
+    if (result.success) {
+      setSuccessMsg(result.message);
+      closeForm();
+      await load();
+    } else {
+      setErrorMsg(result.message);
     }
+    setFormLoading(false);
   };
 
-  const handleDelete = async (manufacturerId: string) => {
-    try {
-      const result = await deleteManufacturerAction(manufacturerId);
-      
-      if (result.success) {
-        setMessage(result.message);
-        await fetchManufacturers();
-        
-        // Clear message after 3 seconds
-        setTimeout(() => setMessage(null), 3000);
-      } else {
-        setError(result.message);
-      }
-    } catch (err) {
-      console.error('Error deleting manufacturer:', err);
-      setError('Failed to delete manufacturer');
-    }
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this manufacturer?')) return;
+    const result = await deleteManufacturerAction(id);
+    if (result.success) { setSuccessMsg(result.message); await load(); }
+    else setErrorMsg(result.message);
   };
 
-  const handleToggleActive = async (manufacturerId: string) => {
-    try {
-      const result = await toggleManufacturerActiveAction(manufacturerId);
-      
-      if (result.success) {
-        setMessage(result.message);
-        await fetchManufacturers();
-        
-        // Clear message after 3 seconds
-        setTimeout(() => setMessage(null), 3000);
-      } else {
-        setError(result.message);
-      }
-    } catch (err) {
-      console.error('Error toggling manufacturer status:', err);
-      setError('Failed to update manufacturer status');
-    }
+  const handleToggle = async (id: string) => {
+    const result = await toggleManufacturerActiveAction(id);
+    if (result.success) { setSuccessMsg(result.message); await load(); }
+    else setErrorMsg(result.message);
   };
 
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-    setEditingManufacturer(null);
-  };
+  if (permError) return <PermissionError errorType={permError as 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR'} />;
 
-  if (error) {
-    return <PermissionError errorType={error as 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR'} />;
-  }
-
-  if (loading) {
-    return <ManufacturersTableSkeleton />;
-  }
+  const columns = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (row: Manufacturer) => (
+        <div>
+          <div className="font-medium text-gray-900">{row.name}</div>
+          {row.description && <div className="text-xs text-gray-400 truncate max-w-[200px]">{row.description}</div>}
+        </div>
+      ),
+    },
+    {
+      key: 'code',
+      header: 'Code',
+      render: (row: Manufacturer) => (
+        <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{row.code}</span>
+      ),
+    },
+    {
+      key: 'country',
+      header: 'Country',
+      render: (row: Manufacturer) => <span className="text-gray-700">{row.country}</span>,
+    },
+    {
+      key: 'contact',
+      header: 'Contact',
+      render: (row: Manufacturer) => (
+        <div className="text-xs space-y-0.5">
+          {row.email && <div className="text-gray-600">{row.email}</div>}
+          {row.phone && <div className="text-gray-400">{row.phone}</div>}
+          {!row.email && !row.phone && <span className="text-gray-300">—</span>}
+        </div>
+      ),
+    },
+    {
+      key: 'active',
+      header: 'Status',
+      render: (row: Manufacturer) => <StatusBadge active={row.active} />,
+    },
+    {
+      key: 'created_at',
+      header: 'Created',
+      render: (row: Manufacturer) => <span className="text-xs text-gray-500">{formatDateToLocal(row.created_at)}</span>,
+    },
+    {
+      key: 'actions',
+      header: '',
+      className: 'text-right',
+      render: (row: Manufacturer) => (
+        <div className="flex justify-end gap-1">
+          <ActionBtn variant="edit" icon={<PencilIcon className="h-4 w-4" />} label="Edit" onClick={() => openEdit(row)} />
+          <ActionBtn
+            variant={row.active ? 'toggle-on' : 'toggle-off'}
+            icon={row.active ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+            label={row.active ? 'Deactivate' : 'Activate'}
+            onClick={() => handleToggle(row.id)}
+          />
+          <ActionBtn variant="delete" icon={<TrashIcon className="h-4 w-4" />} label="Delete" onClick={() => handleDelete(row.id)} />
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <main>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Manufacturers</h1>
-      </div>
-
-      {/* Success/Error Messages */}
-      {message && (
-        <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-green-700">{message}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <ManufacturersTable
-        manufacturers={manufacturers}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onToggleActive={handleToggleActive}
-        onCreateNew={handleCreateNew}
-      />
-
-      {/* Manufacturer Form Modal */}
-      <ManufacturerForm
-        manufacturer={editingManufacturer}
-        isOpen={isFormOpen}
-        onClose={handleCloseForm}
-        onSubmit={handleFormSubmit}
-        loading={formLoading}
-      />
-    </main>
-  );
-}
-
-// Loading skeleton for the table
-function ManufacturersTableSkeleton() {
-  return (
-    <div className="mt-6 flow-root">
-      <div className="inline-block min-w-full align-middle">
-        <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
-          <div className="flex justify-between items-center mb-4">
-            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-10 w-40 bg-gray-200 rounded animate-pulse"></div>
-          </div>
-          
-          <div className="md:hidden">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="mb-2 w-full rounded-md bg-white p-4">
-                <div className="flex items-center justify-between border-b pb-4">
-                  <div className="space-y-2">
-                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-3 w-32 bg-gray-200 rounded animate-pulse"></div>
+    <PageShell
+      title="Manufacturers"
+      count={filtered.length}
+      createLabel="New Manufacturer"
+      onCreate={openCreate}
+      successMessage={successMsg}
+      errorMessage={errorMsg}
+      onClearSuccess={() => setSuccessMsg(null)}
+      onClearError={() => setErrorMsg(null)}
+      filters={
+        <FilterBar>
+          <SearchInput value={search} onChange={v => { setSearch(v); setPage(1); }} placeholder="Search name or code…" />
+          <FilterSelect value={statusFilter} onChange={v => { setStatusFilter(v); setPage(1); }} label="Status" options={STATUS_OPTIONS} />
+        </FilterBar>
+      }
+    >
+      {loading ? (
+        <TableSkeleton cols={7} rows={6} />
+      ) : (
+        <div className="space-y-3">
+          <DataTable
+            columns={columns}
+            rows={pageItems}
+            keyExtractor={r => r.id}
+            emptyMessage="No manufacturers found"
+            mobileCard={row => (
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-medium text-gray-900">{row.name}</div>
+                    <div className="text-xs text-gray-500">{row.code} · {row.country}</div>
                   </div>
-                  <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
+                  <StatusBadge active={row.active} />
                 </div>
-                <div className="flex w-full items-center justify-between pt-4">
-                  <div className="space-y-2">
-                    <div className="h-3 w-20 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-3 w-20 bg-gray-200 rounded animate-pulse"></div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
+                {(row.email || row.phone) && (
+                  <div className="text-xs text-gray-500">{row.email || row.phone}</div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-400">{formatDateToLocal(row.created_at)}</span>
+                  <div className="flex gap-1">
+                    <ActionBtn variant="edit" icon={<PencilIcon className="h-4 w-4" />} label="Edit" onClick={() => openEdit(row)} />
+                    <ActionBtn
+                      variant={row.active ? 'toggle-on' : 'toggle-off'}
+                      icon={row.active ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+                      label={row.active ? 'Deactivate' : 'Activate'}
+                      onClick={() => handleToggle(row.id)}
+                    />
+                    <ActionBtn variant="delete" icon={<TrashIcon className="h-4 w-4" />} label="Delete" onClick={() => handleDelete(row.id)} />
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-
-          <table className="hidden min-w-full text-gray-900 md:table">
-            <thead className="rounded-lg text-left text-sm font-normal">
-              <tr>
-                {[...Array(7)].map((_, i) => (
-                  <th key={i} className="px-4 py-5 font-medium sm:pl-6">
-                    <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {[...Array(5)].map((_, i) => (
-                <tr key={i} className="w-full border-b py-3 text-sm">
-                  {[...Array(7)].map((_, j) => (
-                    <td key={j} className="px-3 py-3">
-                      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            )}
+          />
+          <PaginationBar
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={filtered.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+          />
         </div>
-      </div>
-    </div>
+      )}
+      <ManufacturerForm
+        manufacturer={editingItem}
+        isOpen={isFormOpen}
+        onClose={closeForm}
+        onSubmit={handleFormSubmit}
+        loading={formLoading}
+      />
+    </PageShell>
   );
 }

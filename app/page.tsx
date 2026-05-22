@@ -30,13 +30,14 @@ export default async function Page() {
       <div className="relative z-10 flex flex-col h-full">
         {/* Header with Logo */}
         <div className="flex items-center justify-between p-6">
-          <div className="bg-white rounded-lg p-3 shadow-lg">
-            <Image 
-              src="/pharamlogo.png" 
-              alt="PharmaSERV" 
-              width={120} 
-              height={60}
-              className="object-contain"
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 shadow-lg">
+            <Image
+              src="/logo.png"
+              alt="PharmaSERV"
+              width={120}
+              height={120}
+              className="object-contain drop-shadow-md"
+              priority
             />
           </div>
         </div>

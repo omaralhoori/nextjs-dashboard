@@ -1,240 +1,169 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { 
-  fetchActiveIngredientsAction, 
-  createActiveIngredientAction, 
-  updateActiveIngredientAction, 
-  deleteActiveIngredientAction 
-} from '@/app/lib/actions';
-import ActiveIngredientsTable from '@/app/ui/active-ingredients/active-ingredients-table';
+import { useState, useEffect, useCallback } from 'react';
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import PageShell from '@/app/ui/page-shell';
+import {
+  DataTable, TableSkeleton, PaginationBar,
+  FilterBar, SearchInput, ActionBtn,
+} from '@/app/ui/data-table';
 import ActiveIngredientForm from '@/app/ui/active-ingredients/active-ingredient-form';
 import PermissionError from '@/app/ui/permission-error';
-import type { 
-  ActiveIngredient, 
-  CreateActiveIngredientRequest, 
-  UpdateActiveIngredientRequest 
-} from '@/app/lib/definitions/active-ingredient';
+import {
+  fetchActiveIngredientsAction,
+  createActiveIngredientAction,
+  updateActiveIngredientAction,
+  deleteActiveIngredientAction,
+} from '@/app/lib/functions/active-ingredients';
+import type { ActiveIngredient, CreateActiveIngredientRequest, UpdateActiveIngredientRequest } from '@/app/lib/definitions/active-ingredient';
+import { formatDateToLocal } from '@/app/lib/utils';
+
+const PAGE_SIZE = 20;
 
 export default function ActiveIngredientsPageClient() {
-  const [activeIngredients, setActiveIngredients] = useState<ActiveIngredient[]>([]);
+  const [items, setItems] = useState<ActiveIngredient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [permError, setPermError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingActiveIngredient, setEditingActiveIngredient] = useState<ActiveIngredient | null>(null);
+  const [editingItem, setEditingItem] = useState<ActiveIngredient | null>(null);
   const [formLoading, setFormLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchActiveIngredients();
+  const load = useCallback(async () => {
+    setLoading(true);
+    const result = await fetchActiveIngredientsAction();
+    if ('error' in result) {
+      setPermError(result.error);
+    } else {
+      setItems(result.activeIngredients || []);
+    }
+    setLoading(false);
   }, []);
 
-  const fetchActiveIngredients = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await fetchActiveIngredientsAction();
-      
-      if ('error' in result) {
-        setError(result.error);
-      } else {
-        // Ensure activeIngredients is always an array
-        setActiveIngredients(result.activeIngredients || []);
-      }
-    } catch (err) {
-      console.error('Error fetching active ingredients:', err);
-      setError('NETWORK_ERROR');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => { load(); }, [load]);
 
-  const handleCreateNew = () => {
-    setEditingActiveIngredient(null);
-    setIsFormOpen(true);
-  };
+  const filtered = items.filter(item => {
+    if (search && !item.active_ingredient_name.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
-  const handleEdit = (activeIngredient: ActiveIngredient) => {
-    setEditingActiveIngredient(activeIngredient);
-    setIsFormOpen(true);
-  };
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const openEdit = (item: ActiveIngredient) => { setEditingItem(item); setIsFormOpen(true); };
+  const openCreate = () => { setEditingItem(null); setIsFormOpen(true); };
+  const closeForm = () => { setIsFormOpen(false); setEditingItem(null); };
 
   const handleFormSubmit = async (data: CreateActiveIngredientRequest | UpdateActiveIngredientRequest) => {
     setFormLoading(true);
-    
-    try {
-      let result;
-      if (editingActiveIngredient) {
-        result = await updateActiveIngredientAction(editingActiveIngredient.id, data);
-      } else {
-        result = await createActiveIngredientAction(data as CreateActiveIngredientRequest);
-      }
-      
-      if (result.success) {
-        setMessage(result.message);
-        await fetchActiveIngredients();
-        setIsFormOpen(false);
-        setEditingActiveIngredient(null);
-        
-        // Clear message after 3 seconds
-        setTimeout(() => setMessage(null), 3000);
-      } else {
-        setError(result.message);
-      }
-    } catch (err) {
-      console.error('Error submitting form:', err);
-      setError('Failed to save active ingredient');
-    } finally {
-      setFormLoading(false);
+    const result = editingItem
+      ? await updateActiveIngredientAction(editingItem.id, data)
+      : await createActiveIngredientAction(data as CreateActiveIngredientRequest);
+    if (result.success) {
+      setSuccessMsg(result.message);
+      closeForm();
+      await load();
+    } else {
+      setErrorMsg(result.message);
     }
+    setFormLoading(false);
   };
 
-  const handleDelete = async (activeIngredientId: string) => {
-    try {
-      const result = await deleteActiveIngredientAction(activeIngredientId);
-      
-      if (result.success) {
-        setMessage(result.message);
-        await fetchActiveIngredients();
-        
-        // Clear message after 3 seconds
-        setTimeout(() => setMessage(null), 3000);
-      } else {
-        setError(result.message);
-      }
-    } catch (err) {
-      console.error('Error deleting active ingredient:', err);
-      setError('Failed to delete active ingredient');
-    }
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this active ingredient?')) return;
+    const result = await deleteActiveIngredientAction(id);
+    if (result.success) { setSuccessMsg(result.message); await load(); }
+    else setErrorMsg(result.message);
   };
 
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-    setEditingActiveIngredient(null);
-  };
+  if (permError) return <PermissionError errorType={permError as 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR'} />;
 
-  if (error) {
-    return <PermissionError errorType={error as 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR'} />;
-  }
-
-  if (loading) {
-    return <ActiveIngredientsTableSkeleton />;
-  }
+  const columns = [
+    {
+      key: 'name',
+      header: 'Ingredient Name',
+      render: (row: ActiveIngredient) => <span className="font-medium text-gray-900">{row.active_ingredient_name}</span>,
+    },
+    {
+      key: 'created_at',
+      header: 'Created',
+      render: (row: ActiveIngredient) => <span className="text-xs text-gray-500">{formatDateToLocal(row.created_at)}</span>,
+    },
+    {
+      key: 'updated_at',
+      header: 'Updated',
+      render: (row: ActiveIngredient) => <span className="text-xs text-gray-500">{formatDateToLocal(row.updated_at)}</span>,
+    },
+    {
+      key: 'actions',
+      header: '',
+      className: 'text-right',
+      render: (row: ActiveIngredient) => (
+        <div className="flex justify-end gap-1">
+          <ActionBtn variant="edit" icon={<PencilIcon className="h-4 w-4" />} label="Edit" onClick={() => openEdit(row)} />
+          <ActionBtn variant="delete" icon={<TrashIcon className="h-4 w-4" />} label="Delete" onClick={() => handleDelete(row.id)} />
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <main>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Active Ingredients</h1>
-      </div>
-
-      {/* Success/Error Messages */}
-      {message && (
-        <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-green-700">{message}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <ActiveIngredientsTable
-        activeIngredients={activeIngredients}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onCreateNew={handleCreateNew}
-      />
-
-      {/* Active Ingredient Form Modal */}
-      <ActiveIngredientForm
-        activeIngredient={editingActiveIngredient}
-        isOpen={isFormOpen}
-        onClose={handleCloseForm}
-        onSubmit={handleFormSubmit}
-        loading={formLoading}
-      />
-    </main>
-  );
-}
-
-// Loading skeleton for the table
-function ActiveIngredientsTableSkeleton() {
-  return (
-    <div className="mt-6 flow-root">
-      <div className="inline-block min-w-full align-middle">
-        <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
-          <div className="flex justify-between items-center mb-4">
-            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-10 w-40 bg-gray-200 rounded animate-pulse"></div>
-          </div>
-          
-          <div className="md:hidden">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="mb-2 w-full rounded-md bg-white p-4">
-                <div className="flex items-center justify-between border-b pb-4">
-                  <div className="space-y-2">
-                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
-                  </div>
-                </div>
-                <div className="flex w-full items-center justify-between pt-4">
-                  <div className="space-y-2">
-                    <div className="h-3 w-20 bg-gray-200 rounded animate-pulse"></div>
-                    <div className="h-3 w-20 bg-gray-200 rounded animate-pulse"></div>
+    <PageShell
+      title="Active Ingredients"
+      count={filtered.length}
+      createLabel="New Ingredient"
+      onCreate={openCreate}
+      successMessage={successMsg}
+      errorMessage={errorMsg}
+      onClearSuccess={() => setSuccessMsg(null)}
+      onClearError={() => setErrorMsg(null)}
+      filters={
+        <FilterBar>
+          <SearchInput value={search} onChange={v => { setSearch(v); setPage(1); }} placeholder="Search ingredient name…" />
+        </FilterBar>
+      }
+    >
+      {loading ? (
+        <TableSkeleton cols={4} rows={6} />
+      ) : (
+        <div className="space-y-3">
+          <DataTable
+            columns={columns}
+            rows={pageItems}
+            keyExtractor={r => r.id}
+            emptyMessage="No active ingredients found"
+            mobileCard={row => (
+              <div className="space-y-1">
+                <div className="font-medium text-gray-900">{row.active_ingredient_name}</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-400">{formatDateToLocal(row.created_at)}</span>
+                  <div className="flex gap-1">
+                    <ActionBtn variant="edit" icon={<PencilIcon className="h-4 w-4" />} label="Edit" onClick={() => openEdit(row)} />
+                    <ActionBtn variant="delete" icon={<TrashIcon className="h-4 w-4" />} label="Delete" onClick={() => handleDelete(row.id)} />
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-
-          <table className="hidden min-w-full text-gray-900 md:table">
-            <thead className="rounded-lg text-left text-sm font-normal">
-              <tr>
-                {[...Array(4)].map((_, i) => (
-                  <th key={i} className="px-4 py-5 font-medium sm:pl-6">
-                    <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {[...Array(5)].map((_, i) => (
-                <tr key={i} className="w-full border-b py-3 text-sm">
-                  {[...Array(4)].map((_, j) => (
-                    <td key={j} className="px-3 py-3">
-                      <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            )}
+          />
+          <PaginationBar
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={filtered.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setPage}
+          />
         </div>
-      </div>
-    </div>
+      )}
+      <ActiveIngredientForm
+        activeIngredient={editingItem}
+        isOpen={isFormOpen}
+        onClose={closeForm}
+        onSubmit={handleFormSubmit}
+        loading={formLoading}
+      />
+    </PageShell>
   );
 }

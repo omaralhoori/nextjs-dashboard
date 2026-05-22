@@ -12,10 +12,15 @@ const config: Config = {
         '13': 'repeat(13, minmax(0, 1fr))',
       },
       colors: {
-        blue: {
-          400: '#2589FE',
-          500: '#0070F3',
-          600: '#2F6FEB',
+        pharma: {
+          darkest: '#004d4f',
+          dark: '#005a5c',
+          DEFAULT: '#007476',
+          teal: '#00898b',
+          mid: '#2E8BC0',
+          blue: '#4A9FD0',
+          light: '#7BBBD8',
+          pale: '#B0D8EC',
         },
       },
     },
