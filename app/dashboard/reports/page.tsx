@@ -1,0 +1,5 @@
+import ReportsPageClient from './page-client';
+
+export default function ReportsPage() {
+  return <ReportsPageClient />;
+}
