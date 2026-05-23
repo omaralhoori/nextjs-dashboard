@@ -42,7 +42,7 @@ export interface WarehouseSalesManufacturer {
 
 export interface WarehouseSalesReport {
   period: { start: string; end: string };
-  filters: { status: string[] };
+  filters: { warehouse_id: string | null; status: string[] };
   summary: { total_sales: number; total_orders: number; currency: string };
   by_manufacturer: WarehouseSalesManufacturer[];
 }
@@ -121,6 +121,7 @@ export async function fetchManufacturerStatsAction(): Promise<ManufacturerStats 
 export interface WarehouseSalesFilters {
   start_date?: string;
   end_date?: string;
+  warehouse_id?: string;
   status?: string;
 }
 
@@ -133,6 +134,7 @@ export async function fetchWarehouseSalesReportAction(
     const params = new URLSearchParams();
     if (filters.start_date) params.set('start_date', filters.start_date);
     if (filters.end_date) params.set('end_date', filters.end_date);
+    if (filters.warehouse_id) params.set('warehouse_id', filters.warehouse_id);
     if (filters.status) params.set('status', filters.status);
     const url = `${process.env.NEXT_PUBLIC_API_URL}/admin/reports/warehouse-sales${params.toString() ? `?${params}` : ''}`;
     const res = await fetch(url, {

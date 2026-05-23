@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   ChartBarIcon,
   CubeIcon,
   ShoppingCartIcon,
   CurrencyDollarIcon,
   FunnelIcon,
+  BuildingStorefrontIcon,
 } from '@heroicons/react/24/outline';
 import PageShell from '@/app/ui/page-shell';
 import { TableSkeleton } from '@/app/ui/data-table';
-import {
-  fetchWarehouseSalesReportAction,
-} from '@/app/lib/functions/stats';
+import { fetchWarehouseSalesReportAction } from '@/app/lib/functions/stats';
 import type { WarehouseSalesReport, WarehouseSalesManufacturer } from '@/app/lib/functions/stats';
+import { fetchWarehousesAction } from '@/app/lib/functions/warehouse';
+import type { Warehouse } from '@/app/lib/definitions/warehouse';
 
 const ALL_STATUSES = ['Pending', 'Processing', 'Delivery', 'Completed', 'Rejected', 'Undeliverable'];
 
@@ -138,10 +139,18 @@ export default function ReportsPageClient() {
 
   const [startDate, setStartDate] = useState(toISO(firstOfPrevMonth));
   const [endDate, setEndDate] = useState(toISO(lastOfPrevMonth));
+  const [warehouseId, setWarehouseId] = useState('');
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['Completed', 'Processing', 'Delivery']);
   const [report, setReport] = useState<WarehouseSalesReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchWarehousesAction(1, 100).then(res => {
+      if (!('error' in res)) setWarehouses(res.warehouses);
+    });
+  }, []);
 
   const toggleStatus = (s: string) => {
     setSelectedStatuses(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
@@ -154,6 +163,7 @@ export default function ReportsPageClient() {
     const result = await fetchWarehouseSalesReportAction({
       start_date: startDate,
       end_date: endDate,
+      warehouse_id: warehouseId || undefined,
       status: selectedStatuses.length ? selectedStatuses.join(',') : undefined,
     });
     if ('error' in result) {
@@ -162,7 +172,7 @@ export default function ReportsPageClient() {
       setReport(result);
     }
     setLoading(false);
-  }, [startDate, endDate, selectedStatuses]);
+  }, [startDate, endDate, warehouseId, selectedStatuses]);
 
   return (
     <PageShell
@@ -171,7 +181,7 @@ export default function ReportsPageClient() {
       onClearError={() => setErrorMsg(null)}
       filters={
         <div className="space-y-4">
-          {/* Date Range */}
+          {/* Date Range + Warehouse */}
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-gray-500">Start Date</label>
@@ -190,6 +200,22 @@ export default function ReportsPageClient() {
                 onChange={e => setEndDate(e.target.value)}
                 className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-[#007476] focus:outline-none focus:ring-1 focus:ring-[#007476]"
               />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="flex items-center gap-1 text-xs font-medium text-gray-500">
+                <BuildingStorefrontIcon className="h-3.5 w-3.5" />
+                Warehouse
+              </label>
+              <select
+                value={warehouseId}
+                onChange={e => setWarehouseId(e.target.value)}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-[#007476] focus:outline-none focus:ring-1 focus:ring-[#007476] min-w-[180px]"
+              >
+                <option value="">All Warehouses</option>
+                {warehouses.map(w => (
+                  <option key={w.id} value={w.id}>{w.warehouse_name}</option>
+                ))}
+              </select>
             </div>
             <button
               onClick={runReport}
@@ -239,11 +265,17 @@ export default function ReportsPageClient() {
       ) : report ? (
         <div className="space-y-4">
           {/* Period info */}
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
             <span className="font-medium text-gray-700">Period:</span>
-            {formatDate(report.period.start)} → {formatDate(report.period.end)}
+            <span>{formatDate(report.period.start)} → {formatDate(report.period.end)}</span>
+            {report.filters.warehouse_id && (
+              <span className="flex items-center gap-1 rounded-full bg-[#f0fafa] px-2.5 py-0.5 text-xs font-medium text-[#007476] ring-1 ring-[#007476]/20">
+                <BuildingStorefrontIcon className="h-3 w-3" />
+                {warehouses.find(w => w.id === report.filters.warehouse_id)?.warehouse_name ?? 'Warehouse'}
+              </span>
+            )}
             {report.filters.status.length > 0 && (
-              <span className="ml-2 text-gray-400">· {report.filters.status.join(', ')}</span>
+              <span className="text-gray-400 text-xs">{report.filters.status.join(' · ')}</span>
             )}
           </div>
 
