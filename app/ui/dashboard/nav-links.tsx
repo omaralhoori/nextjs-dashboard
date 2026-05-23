@@ -13,6 +13,7 @@ import {
   UserGroupIcon,
   UserCircleIcon,
   ChartBarIcon,
+  ComputerDesktopIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -30,6 +31,7 @@ const links = [
   { name: 'Active Ingredients', href: '/dashboard/active-ingredients', icon: BeakerIcon },
   { name: 'Address', href: '/dashboard/address', icon: MapPinIcon },
   { name: 'Reports', href: '/dashboard/reports', icon: ChartBarIcon },
+  { name: 'Home Screen', href: '/dashboard/home-screen', icon: ComputerDesktopIcon },
   { name: 'Profile', href: '/dashboard/profile', icon: UserCircleIcon },
 ];
 
