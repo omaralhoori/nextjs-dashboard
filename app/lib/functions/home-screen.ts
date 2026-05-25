@@ -59,14 +59,15 @@ export async function fetchBannersAction(): Promise<{ banners: Banner[] } | Fetc
   }
 }
 
-export async function createBannerAction(dto: CreateBannerDto): Promise<ActionResult<Banner>> {
+export async function createBannerAction(formData: FormData): Promise<ActionResult<Banner>> {
   try {
-    const res = await adminFetch('/admin/home-screen/banners', {
+    const token = await getToken();
+    if (!token) return { success: false, message: 'Unauthorized' };
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/home-screen/banners`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dto),
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
-    if (!res) return { success: false, message: 'Unauthorized' };
     const data = await res.json();
     if (!res.ok) return { success: false, message: data.message || 'Failed to create banner' };
     return { success: true, message: 'Banner created successfully', data: data.banner };
@@ -135,14 +136,15 @@ export async function fetchOffersAction(): Promise<{ offers: Offer[] } | FetchEr
   }
 }
 
-export async function createOfferAction(dto: CreateOfferDto): Promise<ActionResult<Offer>> {
+export async function createOfferAction(formData: FormData): Promise<ActionResult<Offer>> {
   try {
-    const res = await adminFetch('/admin/home-screen/offers', {
+    const token = await getToken();
+    if (!token) return { success: false, message: 'Unauthorized' };
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/home-screen/offers`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dto),
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
-    if (!res) return { success: false, message: 'Unauthorized' };
     const data = await res.json();
     if (!res.ok) return { success: false, message: data.message || 'Failed to create offer' };
     return { success: true, message: 'Offer created successfully', data: data.offer };

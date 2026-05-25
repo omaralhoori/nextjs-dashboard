@@ -133,7 +133,7 @@ function BannerForm({
   banner?: Banner;
   promotions: PromotionOption[];
   loading: boolean;
-  onSubmit: (dto: CreateBannerDto) => void;
+  onSubmit: (dto: CreateBannerDto, image?: File) => void;
   onClose: () => void;
 }) {
   const [startDate, setStartDate] = useState(banner?.start_date?.slice(0, 10) ?? '');
@@ -142,6 +142,15 @@ function BannerForm({
   const [promotionId, setPromotionId] = useState(banner?.promotion_id ?? '');
   const [sortOrder, setSortOrder] = useState(String(banner?.sort_order ?? 0));
   const [isActive, setIsActive] = useState(banner?.is_active ?? true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setImageFile(f);
+    setImagePreview(URL.createObjectURL(f));
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,11 +161,34 @@ function BannerForm({
       promotion_id: promotionId || null,
       sort_order: Number(sortOrder),
       is_active: isActive,
-    });
+    }, imageFile ?? undefined);
   };
 
   return (
     <form onSubmit={submit} className="space-y-4">
+      {!banner && (
+        <div>
+          <label className={labelCls}>Banner Image (optional)</label>
+          {imagePreview ? (
+            <div className="relative">
+              <img src={imagePreview} alt="" className="w-full h-32 rounded-lg object-cover border border-gray-200" />
+              <button
+                type="button"
+                onClick={() => { setImageFile(null); setImagePreview(null); }}
+                className="absolute top-2 right-2 rounded-full bg-white/80 p-1 text-gray-600 hover:bg-white shadow"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <label className="flex flex-col items-center justify-center w-full h-24 rounded-lg border-2 border-dashed border-gray-200 cursor-pointer hover:border-[#007476] hover:bg-[#f0fafa] transition-colors">
+              <PhotoIcon className="h-6 w-6 text-gray-400 mb-1" />
+              <span className="text-xs text-gray-400">Click to upload image</span>
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleImageChange} />
+            </label>
+          )}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Start Date *</label>
@@ -211,7 +243,7 @@ function OfferForm({
   offer?: Offer;
   promotions: PromotionOption[];
   loading: boolean;
-  onSubmit: (dto: CreateOfferDto) => void;
+  onSubmit: (dto: CreateOfferDto, image?: File) => void;
   onClose: () => void;
 }) {
   const [titleEn, setTitleEn] = useState(offer?.title_en ?? '');
@@ -220,6 +252,15 @@ function OfferForm({
   const [promotionId, setPromotionId] = useState(offer?.promotion_id ?? '');
   const [sortOrder, setSortOrder] = useState(String(offer?.sort_order ?? 0));
   const [isActive, setIsActive] = useState(offer?.is_active ?? true);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setImageFile(f);
+    setImagePreview(URL.createObjectURL(f));
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,11 +271,34 @@ function OfferForm({
       promotion_id: promotionId || null,
       sort_order: Number(sortOrder),
       is_active: isActive,
-    });
+    }, imageFile ?? undefined);
   };
 
   return (
     <form onSubmit={submit} className="space-y-4">
+      {!offer && (
+        <div>
+          <label className={labelCls}>Offer Image (optional)</label>
+          {imagePreview ? (
+            <div className="relative">
+              <img src={imagePreview} alt="" className="w-full h-32 rounded-lg object-cover border border-gray-200" />
+              <button
+                type="button"
+                onClick={() => { setImageFile(null); setImagePreview(null); }}
+                className="absolute top-2 right-2 rounded-full bg-white/80 p-1 text-gray-600 hover:bg-white shadow"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <label className="flex flex-col items-center justify-center w-full h-24 rounded-lg border-2 border-dashed border-gray-200 cursor-pointer hover:border-[#007476] hover:bg-[#f0fafa] transition-colors">
+              <PhotoIcon className="h-6 w-6 text-gray-400 mb-1" />
+              <span className="text-xs text-gray-400">Click to upload image</span>
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleImageChange} />
+            </label>
+          )}
+        </div>
+      )}
       <div>
         <label className={labelCls}>Title (English) *</label>
         <input required value={titleEn} onChange={e => setTitleEn(e.target.value)} placeholder="e.g. Special Offer" className={inputCls} />
@@ -292,7 +356,7 @@ function ItemSearchModal({ onSelect, onClose }: { onSelect: (item: Item) => void
     if (!query.trim()) { setResults([]); return; }
     debounceRef.current = setTimeout(async () => {
       setSearching(true);
-      const res = await fetchItemsAction({ search: query, limit: 10, enabled: true });
+      const res = await fetchItemsAction({ search: query, limit: 10 });
       if (!('error' in res)) setResults(res.items ?? []);
       setSearching(false);
     }, 300);
@@ -360,11 +424,22 @@ function BannersTab({
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const handleSubmit = async (dto: CreateBannerDto) => {
+  const handleSubmit = async (dto: CreateBannerDto, image?: File) => {
     setFormLoading(true);
-    const res = modal?.banner
-      ? await updateBannerAction(modal.banner.id, dto)
-      : await createBannerAction(dto);
+    let res;
+    if (modal?.banner) {
+      res = await updateBannerAction(modal.banner.id, dto);
+    } else {
+      const fd = new FormData();
+      fd.append('start_date', dto.start_date);
+      if (dto.end_date) fd.append('end_date', dto.end_date);
+      fd.append('is_carousel', String(dto.is_carousel ?? false));
+      if (dto.promotion_id) fd.append('promotion_id', dto.promotion_id);
+      fd.append('sort_order', String(dto.sort_order ?? 0));
+      fd.append('is_active', String(dto.is_active ?? true));
+      if (image) fd.append('image', image);
+      res = await createBannerAction(fd);
+    }
     setFormLoading(false);
     if (res.success) { onSuccess(res.message); setModal(null); onRefresh(); }
     else onError(res.message);
@@ -508,11 +583,22 @@ function OffersTab({
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const handleSubmit = async (dto: CreateOfferDto) => {
+  const handleSubmit = async (dto: CreateOfferDto, image?: File) => {
     setFormLoading(true);
-    const res = modal?.offer
-      ? await updateOfferAction(modal.offer.id, dto)
-      : await createOfferAction(dto);
+    let res;
+    if (modal?.offer) {
+      res = await updateOfferAction(modal.offer.id, dto);
+    } else {
+      const fd = new FormData();
+      fd.append('title_en', dto.title_en);
+      fd.append('title_ar', dto.title_ar);
+      if (dto.details) fd.append('details', dto.details);
+      if (dto.promotion_id) fd.append('promotion_id', dto.promotion_id);
+      fd.append('sort_order', String(dto.sort_order ?? 0));
+      fd.append('is_active', String(dto.is_active ?? true));
+      if (image) fd.append('image', image);
+      res = await createOfferAction(fd);
+    }
     setFormLoading(false);
     if (res.success) { onSuccess(res.message); setModal(null); onRefresh(); }
     else onError(res.message);

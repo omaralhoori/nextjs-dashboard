@@ -28,7 +28,7 @@ async function getAuthHeaders() {
 export async function fetchItemsAction(filters?: ItemSearchFilters) {
   try {
     const headers = await getAuthHeaders();
-    
+
     // Build query string from filters
     const queryParams = new URLSearchParams();
     if (filters?.manufacturer_id) queryParams.append('manufacturer_id', filters.manufacturer_id);
@@ -42,7 +42,7 @@ export async function fetchItemsAction(filters?: ItemSearchFilters) {
 
     const queryString = queryParams.toString();
     const url = queryString ? `${API_BASE_URL}/items/search?${queryString}` : `${API_BASE_URL}/items`;
-    
+
     const response = await fetch(url, {
       method: 'GET',
       headers,
@@ -50,13 +50,9 @@ export async function fetchItemsAction(filters?: ItemSearchFilters) {
     });
 
     if (!response.ok) {
-      if (response.status === 401) {
-        return { error: 'UNAUTHORIZED' };
-      }
-      if (response.status === 403) {
-        return { error: 'PERMISSION_DENIED' };
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.status === 401) return { error: 'UNAUTHORIZED' };
+      if (response.status === 403) return { error: 'PERMISSION_DENIED' };
+      return { error: 'FETCH_ERROR' };
     }
 
     const data: ItemsResponse = await response.json();
