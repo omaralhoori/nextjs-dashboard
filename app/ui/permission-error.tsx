@@ -1,7 +1,7 @@
 'use client';
 
 import { ExclamationTriangleIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
-import { signOut } from '@/auth';
+import { signOutAction } from '@/app/lib/functions/sign-out';
 import { Button } from '@/app/ui/button';
 
 interface PermissionErrorProps {
@@ -10,7 +10,7 @@ interface PermissionErrorProps {
 
 export default function PermissionError({ errorType }: PermissionErrorProps) {
   const handleLogout = async () => {
-    await signOut();
+    await signOutAction();
   };
 
   const getErrorMessage = () => {
