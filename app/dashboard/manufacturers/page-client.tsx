@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { PencilIcon, TrashIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import PageShell from '@/app/ui/page-shell';
 import {
@@ -71,11 +72,11 @@ export default function ManufacturersPageClient() {
   const openCreate = () => { setEditingItem(null); setIsFormOpen(true); };
   const closeForm = () => { setIsFormOpen(false); setEditingItem(null); };
 
-  const handleFormSubmit = async (data: CreateManufacturerRequest | UpdateManufacturerRequest) => {
+  const handleFormSubmit = async (data: CreateManufacturerRequest | UpdateManufacturerRequest, imageFile?: File) => {
     setFormLoading(true);
     const result = editingItem
-      ? await updateManufacturerAction(editingItem.id, data)
-      : await createManufacturerAction(data as CreateManufacturerRequest);
+      ? await updateManufacturerAction(editingItem.id, data, imageFile)
+      : await createManufacturerAction(data as CreateManufacturerRequest, imageFile);
     if (result.success) {
       setSuccessMsg(result.message);
       closeForm();
@@ -106,9 +107,26 @@ export default function ManufacturersPageClient() {
       key: 'name',
       header: 'Name',
       render: (row: Manufacturer) => (
-        <div>
-          <div className="font-medium text-gray-900">{row.name}</div>
-          {row.description && <div className="text-xs text-gray-400 truncate max-w-[200px]">{row.description}</div>}
+        <div className="flex items-center gap-3">
+          {row.imageUrl ? (
+            <div className="w-9 h-9 rounded-md overflow-hidden border border-gray-100 bg-gray-50 flex-shrink-0">
+              <Image
+                src={row.imageUrl}
+                alt={row.name}
+                width={36}
+                height={36}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-9 h-9 rounded-md bg-gray-100 flex-shrink-0 flex items-center justify-center">
+              <span className="text-xs font-bold text-gray-400">{row.code.slice(0, 2)}</span>
+            </div>
+          )}
+          <div>
+            <div className="font-medium text-gray-900">{row.name}</div>
+            {row.description && <div className="text-xs text-gray-400 truncate max-w-[180px]">{row.description}</div>}
+          </div>
         </div>
       ),
     },
@@ -193,9 +211,20 @@ export default function ManufacturersPageClient() {
             mobileCard={row => (
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-medium text-gray-900">{row.name}</div>
-                    <div className="text-xs text-gray-500">{row.code} · {row.country}</div>
+                  <div className="flex items-center gap-2 min-w-0">
+                    {row.imageUrl ? (
+                      <div className="w-9 h-9 rounded-md overflow-hidden border border-gray-100 bg-gray-50 flex-shrink-0">
+                        <Image src={row.imageUrl} alt={row.name} width={36} height={36} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-9 h-9 rounded-md bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                        <span className="text-xs font-bold text-gray-400">{row.code.slice(0, 2)}</span>
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-medium text-gray-900">{row.name}</div>
+                      <div className="text-xs text-gray-500">{row.code} · {row.country}</div>
+                    </div>
                   </div>
                   <StatusBadge active={row.active} />
                 </div>

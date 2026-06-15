@@ -14,6 +14,7 @@ import {
   UserCircleIcon,
   ChartBarIcon,
   ComputerDesktopIcon,
+  KeyIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -32,6 +33,7 @@ const links = [
   { name: 'Address', href: '/dashboard/address', icon: MapPinIcon },
   { name: 'Reports', href: '/dashboard/reports', icon: ChartBarIcon },
   { name: 'Home Screen', href: '/dashboard/home-screen', icon: ComputerDesktopIcon },
+  { name: 'Password Resets', href: '/dashboard/password-reset', icon: KeyIcon },
   { name: 'Profile', href: '/dashboard/profile', icon: UserCircleIcon },
 ];
 

@@ -235,6 +235,33 @@ export async function updateUserProfileAction(profileData: UpdateProfileRequest)
   }
 }
 
+// Admin: change password for any user by ID
+export async function adminChangeUserPasswordAction(userId: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const headers = await getAuthHeaders();
+
+    const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/change-password`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ newPassword }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) return { success: false, message: 'UNAUTHORIZED' };
+      if (response.status === 403) return { success: false, message: 'PERMISSION_DENIED' };
+      if (response.status === 404) return { success: false, message: 'User not found' };
+      const errorData = await response.json();
+      return { success: false, message: errorData.message || 'Failed to change password' };
+    }
+
+    const data = await response.json();
+    return { success: true, message: data.message };
+  } catch (error) {
+    console.error('Error changing user password:', error);
+    return { success: false, message: 'NETWORK_ERROR' };
+  }
+}
+
 // Change user password
 export async function changePasswordAction(passwordData: ChangePasswordRequest): Promise<{ success: boolean; message: string }> {
   try {

@@ -16,7 +16,7 @@ export async function createWarehouseAction(warehouseData: {
   district: string;
   phone: string;
   location: string;
-}): Promise<{ success: true; message: string } | { success: false; message: string }> {
+}, imageFile?: File): Promise<{ success: true; message: string } | { success: false; message: string }> {
   try {
     const session = await auth();
     if (!session?.user?.accessToken) {
@@ -28,13 +28,23 @@ export async function createWarehouseAction(warehouseData: {
       return { success: false, message: 'API URL not configured' };
     }
 
+    let body: BodyInit;
+    const headers: Record<string, string> = { Authorization: `Bearer ${session.user.accessToken}` };
+
+    if (imageFile) {
+      const formData = new FormData();
+      Object.entries(warehouseData).forEach(([k, v]) => { if (v !== undefined) formData.append(k, String(v)); });
+      formData.append('image', imageFile);
+      body = formData;
+    } else {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify(warehouseData);
+    }
+
     const response = await fetch(`${apiUrl}/admin/warehouses/create`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.user.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(warehouseData),
+      headers,
+      body,
     });
 
     if (!response.ok) {

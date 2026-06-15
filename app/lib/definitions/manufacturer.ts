@@ -8,6 +8,7 @@ export interface Manufacturer {
   email?: string | null;
   website?: string | null;
   active: boolean;
+  imageUrl?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +38,7 @@ export interface CreateManufacturerRequest {
   website?: string;
   description?: string;
   phone?: string;
+  imageUrl?: string;
 }
 
 export interface UpdateManufacturerRequest {
@@ -48,4 +50,5 @@ export interface UpdateManufacturerRequest {
   description?: string;
   phone?: string;
   active?: boolean;
+  imageUrl?: string;
 }

@@ -149,4 +149,12 @@ export {
   fetchUserProfileAction,
   updateUserProfileAction,
   changePasswordAction,
+  adminChangeUserPasswordAction,
 } from '@/app/lib/functions/users';
+
+export {
+  // Password reset request functions
+  fetchPasswordResetRequestsAction,
+  resolvePasswordResetRequestAction,
+  rejectPasswordResetRequestAction,
+} from '@/app/lib/functions/password-reset';

@@ -10,6 +10,7 @@ export interface Warehouse {
   location: string;
   status: string;
   adminNotes: string | null;
+  imageUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }

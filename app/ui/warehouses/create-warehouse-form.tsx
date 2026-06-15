@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { Button } from '@/app/ui/button';
-import { 
-  AddressState, 
-  City, 
-  District 
+import {
+  AddressState,
+  City,
+  District
 } from '@/app/lib/definitions';
-import { 
-  fetchStatesAction, 
-  fetchCitiesAction, 
-  fetchDistrictsAction, 
-  createWarehouseAction 
+import {
+  fetchStatesAction,
+  fetchCitiesAction,
+  fetchDistrictsAction,
+  createWarehouseAction
 } from '@/app/lib/actions';
-import { ExclamationCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import { ExclamationCircleIcon, CheckCircleIcon, CloudArrowUpIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function CreateWarehouseForm() {
   const [formData, setFormData] = useState({
@@ -22,6 +23,10 @@ export default function CreateWarehouseForm() {
     phone: '',
     location: '',
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [states, setStates] = useState<AddressState[]>([]);
   const [cities, setCities] = useState<City[]>([]);
@@ -94,6 +99,23 @@ export default function CreateWarehouseForm() {
     }
   }, [selectedCity]);
 
+  const handleImageChange = (file: File) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setImageError('Please select a valid image (JPEG, PNG, GIF, WebP)');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError('Image must be less than 5MB');
+      return;
+    }
+    setImageError(null);
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = e => setImagePreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -133,22 +155,19 @@ export default function CreateWarehouseForm() {
       const result = await createWarehouseAction({
         ...formData,
         district: selectedDistrict,
-      });
+      }, imageFile || undefined);
 
       if (result.success) {
         setMessage({ type: 'success', text: result.message });
         // Reset form
-        setFormData({
-          warehouse_name: '',
-          district: '',
-          phone: '',
-          location: '',
-        });
+        setFormData({ warehouse_name: '', district: '', phone: '', location: '' });
         setSelectedState('');
         setSelectedCity('');
         setSelectedDistrict('');
         setCities([]);
         setDistricts([]);
+        setImageFile(null);
+        setImagePreview(null);
       } else {
         setMessage({ type: 'error', text: result.message });
       }
@@ -173,6 +192,50 @@ export default function CreateWarehouseForm() {
       <h2 className="text-2xl font-bold mb-6">Create New Warehouse</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Image Upload */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Warehouse Image (Optional)</label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+            onChange={e => e.target.files?.[0] && handleImageChange(e.target.files[0])}
+            className="hidden"
+          />
+          {imagePreview ? (
+            <div className="relative inline-block">
+              <div className="w-32 h-24 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                <Image src={imagePreview} alt="Warehouse" width={128} height={96} className="w-full h-full object-cover" />
+              </div>
+              <button
+                type="button"
+                onClick={() => { setImageFile(null); setImagePreview(null); }}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
+              >
+                <XMarkIcon className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="mt-1 block text-xs text-blue-600 hover:underline"
+              >
+                Change image
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-md text-sm text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-colors w-full justify-center"
+            >
+              <CloudArrowUpIcon className="h-5 w-5" />
+              Click to upload warehouse image
+            </button>
+          )}
+          {imageError && <p className="mt-1 text-sm text-red-600">{imageError}</p>}
+          <p className="mt-1 text-xs text-gray-400">PNG, JPG, GIF, WebP up to 5MB</p>
+        </div>
+
         {/* Warehouse Name */}
         <div>
           <label htmlFor="warehouse_name" className="block text-sm font-medium text-gray-700 mb-2">
