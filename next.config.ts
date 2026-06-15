@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: 'standalone',
   experimental: {
     serverActions: {
       bodySizeLimit: '5mb',
@@ -19,6 +19,12 @@ const nextConfig: NextConfig = {
         protocol: 'http',
         hostname: 'localhost',
         port: '3001',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '194.163.147.65',
+        port: '3015',
         pathname: '/uploads/**',
       },
     ],

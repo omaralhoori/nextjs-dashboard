@@ -1,0 +1,16 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        # NEXT_PUBLIC_API_URL is baked into the bundle at build time.
+        # Override here or set it in a .env file next to docker-compose.yml.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://194.163.147.65:3015}
+    ports:
+      - "3000:3000"
+    environment:
+      # Runtime-only secrets — read from a .env file or the host environment.
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      AUTH_TRUST_HOST: "true"
+    restart: unless-stopped
