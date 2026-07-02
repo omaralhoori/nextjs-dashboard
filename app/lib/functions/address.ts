@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 import { auth } from '@/auth';
 import type {
@@ -21,7 +22,7 @@ import type {
   UpdateDistrictRequest,
 } from '@/app/lib/definitions/address';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = getServerApiUrl() || 'http://localhost:3001';
 
 async function getAuthHeaders() {
   const session = await auth();

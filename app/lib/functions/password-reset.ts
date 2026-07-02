@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 import { auth } from '@/auth';
 import type {
@@ -6,7 +7,7 @@ import type {
   PasswordResetRequest,
 } from '@/app/lib/definitions/password-reset';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = getServerApiUrl();
 
 async function getAuthHeaders() {
   const session = await auth();

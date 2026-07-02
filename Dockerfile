@@ -3,7 +3,7 @@ FROM node:22-alpine AS deps
 RUN corepack enable pnpm
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # ── Stage 2: Build ────────────────────────────────────────────────────────────
@@ -14,7 +14,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# NEXT_PUBLIC_* vars are baked into the JS bundle at build time
+# NEXT_PUBLIC_* vars are baked into the JS bundle at build time only
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1

@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 // ============================================================================
 // WAREHOUSE DISTRICT MANAGEMENT FUNCTIONS
@@ -17,7 +18,7 @@ export async function fetchWarehouseDistrictsAction(warehouseId: string): Promis
       return { error: 'UNAUTHORIZED' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       console.error('NEXT_PUBLIC_API_URL environment variable is not set');
       return { error: 'NETWORK_ERROR' };
@@ -72,7 +73,7 @@ export async function addDistrictToWarehouseAction(warehouseId: string, district
       return { success: false, message: 'No access token available' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       return { success: false, message: 'API URL not configured' };
     }
@@ -105,7 +106,7 @@ export async function removeDistrictFromWarehouseAction(warehouseId: string, dis
       return { success: false, message: 'No access token available' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       return { success: false, message: 'API URL not configured' };
     }
@@ -138,7 +139,7 @@ export async function updateDistrictStatusAction(warehouseId: string, districtId
       return { success: false, message: 'No access token available' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       return { success: false, message: 'API URL not configured' };
     }

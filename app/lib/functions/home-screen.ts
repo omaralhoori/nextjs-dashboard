@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 import { auth } from '@/auth';
 import type {
@@ -18,7 +19,7 @@ async function getToken(): Promise<string | null> {
 async function adminFetch(path: string, options: RequestInit = {}): Promise<Response | null> {
   const token = await getToken();
   if (!token) return null;
-  return fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+  return fetch(`${getServerApiUrl()}${path}`, {
     ...options,
     headers: { Authorization: `Bearer ${token}`, ...options.headers },
     cache: 'no-store',
@@ -63,7 +64,7 @@ export async function createBannerAction(formData: FormData): Promise<ActionResu
   try {
     const token = await getToken();
     if (!token) return { success: false, message: 'Unauthorized' };
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/home-screen/banners`, {
+    const res = await fetch(`${getServerApiUrl()}/admin/home-screen/banners`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
@@ -108,7 +109,7 @@ export async function uploadBannerImageAction(id: string, formData: FormData): P
   try {
     const token = await getToken();
     if (!token) return { success: false, message: 'Unauthorized' };
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/home-screen/banners/${id}/image`, {
+    const res = await fetch(`${getServerApiUrl()}/admin/home-screen/banners/${id}/image`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
@@ -140,7 +141,7 @@ export async function createOfferAction(formData: FormData): Promise<ActionResul
   try {
     const token = await getToken();
     if (!token) return { success: false, message: 'Unauthorized' };
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/home-screen/offers`, {
+    const res = await fetch(`${getServerApiUrl()}/admin/home-screen/offers`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
@@ -185,7 +186,7 @@ export async function uploadOfferImageAction(id: string, formData: FormData): Pr
   try {
     const token = await getToken();
     if (!token) return { success: false, message: 'Unauthorized' };
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/home-screen/offers/${id}/image`, {
+    const res = await fetch(`${getServerApiUrl()}/admin/home-screen/offers/${id}/image`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: formData,

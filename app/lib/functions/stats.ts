@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 import { auth } from '@/auth';
 
@@ -58,7 +59,7 @@ export async function fetchWarehouseStatsAction(): Promise<WarehouseStats | Stat
   try {
     const token = await getToken();
     if (!token) return { error: 'UNAUTHORIZED' };
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/stats/warehouses`, {
+    const res = await fetch(`${getServerApiUrl()}/admin/stats/warehouses`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
     });
@@ -74,7 +75,7 @@ export async function fetchPharmacyStatsAction(): Promise<PharmacyStats | StatsE
   try {
     const token = await getToken();
     if (!token) return { error: 'UNAUTHORIZED' };
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/stats/pharmacies`, {
+    const res = await fetch(`${getServerApiUrl()}/admin/stats/pharmacies`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
     });
@@ -90,7 +91,7 @@ export async function fetchItemStatsAction(): Promise<ItemStats | StatsError> {
   try {
     const token = await getToken();
     if (!token) return { error: 'UNAUTHORIZED' };
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/stats/items`, {
+    const res = await fetch(`${getServerApiUrl()}/admin/stats/items`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
     });
@@ -106,7 +107,7 @@ export async function fetchManufacturerStatsAction(): Promise<ManufacturerStats 
   try {
     const token = await getToken();
     if (!token) return { error: 'UNAUTHORIZED' };
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/stats/manufacturers`, {
+    const res = await fetch(`${getServerApiUrl()}/admin/stats/manufacturers`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
     });
@@ -136,7 +137,7 @@ export async function fetchWarehouseSalesReportAction(
     if (filters.end_date) params.set('end_date', filters.end_date);
     if (filters.warehouse_id) params.set('warehouse_id', filters.warehouse_id);
     if (filters.status) params.set('status', filters.status);
-    const url = `${process.env.NEXT_PUBLIC_API_URL}/admin/reports/warehouse-sales${params.toString() ? `?${params}` : ''}`;
+    const url = `${getServerApiUrl()}/admin/reports/warehouse-sales${params.toString() ? `?${params}` : ''}`;
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',

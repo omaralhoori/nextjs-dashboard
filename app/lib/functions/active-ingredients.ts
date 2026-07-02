@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 import { auth } from '@/auth';
 import type { 
@@ -9,7 +10,7 @@ import type {
   ActiveIngredientResponse 
 } from '@/app/lib/definitions/active-ingredient';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = getServerApiUrl();
 
 // Fetch all active ingredients
 export async function fetchActiveIngredientsAction(): Promise<ActiveIngredientsResponse | { error: string }> {

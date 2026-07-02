@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 import { auth } from '@/auth';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = getServerApiUrl() || 'http://localhost:3001';
 
 export async function GET(request: Request) {
   try {

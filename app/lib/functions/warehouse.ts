@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 // ============================================================================
 // WAREHOUSE MANAGEMENT FUNCTIONS
@@ -23,7 +24,7 @@ export async function createWarehouseAction(warehouseData: {
       return { success: false, message: 'No access token available' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       return { success: false, message: 'API URL not configured' };
     }
@@ -77,7 +78,7 @@ export async function fetchWarehousesAction(
       return { error: 'UNAUTHORIZED' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       console.error('NEXT_PUBLIC_API_URL environment variable is not set');
       return { error: 'NETWORK_ERROR' };
@@ -150,7 +151,7 @@ export async function createWarehouseManagerAction(managerData: {
       return { success: false, message: 'No access token available' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       return { success: false, message: 'API URL not configured' };
     }
@@ -185,7 +186,7 @@ export async function fetchWarehouseDetailsAction(warehouseId: string): Promise<
       return { error: 'UNAUTHORIZED' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       console.error('NEXT_PUBLIC_API_URL environment variable is not set');
       return { error: 'NETWORK_ERROR' };

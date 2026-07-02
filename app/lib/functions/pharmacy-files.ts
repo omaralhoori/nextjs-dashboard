@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 // ============================================================================
 // PHARMACY FILE MANAGEMENT FUNCTIONS
@@ -13,7 +14,7 @@ export async function fetchPharmacyFilesAction(pharmacyId: string) {
       return { error: 'UNAUTHORIZED' };
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/pharmacy-files/pharmacy/${pharmacyId}`, {
+    const response = await fetch(`${getServerApiUrl()}/admin/pharmacy-files/pharmacy/${pharmacyId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${session.user.accessToken}`,
@@ -48,7 +49,7 @@ export async function downloadPharmacyFileAction(fileId: string) {
       return { error: 'UNAUTHORIZED' };
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/pharmacy-files/download/${fileId}`, {
+    const response = await fetch(`${getServerApiUrl()}/admin/pharmacy-files/download/${fileId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${session.user.accessToken}`,

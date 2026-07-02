@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 // ============================================================================
 // PHARMACY MANAGEMENT FUNCTIONS
@@ -18,7 +19,7 @@ export async function approvePharmacy(pharmacyId: string) {
       throw new Error('No access token available');
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/pharmacies/${pharmacyId}/approve`, {
+    const response = await fetch(`${getServerApiUrl()}/admin/pharmacies/${pharmacyId}/approve`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${session.user.accessToken}`,
@@ -45,7 +46,7 @@ export async function rejectPharmacy(pharmacyId: string, reason?: string) {
       throw new Error('No access token available');
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/pharmacies/${pharmacyId}/reject`, {
+    const response = await fetch(`${getServerApiUrl()}/admin/pharmacies/${pharmacyId}/reject`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${session.user.accessToken}`,
@@ -74,7 +75,7 @@ export async function fetchPendingPharmaciesAction(): Promise<PharmaciesResponse
       return { error: 'UNAUTHORIZED' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       console.error('NEXT_PUBLIC_API_URL environment variable is not set');
       return { error: 'NETWORK_ERROR' };
@@ -131,7 +132,7 @@ export async function fetchAllPharmaciesAction(page: number = 1, limit: number =
       return { error: 'UNAUTHORIZED' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       console.error('NEXT_PUBLIC_API_URL environment variable is not set');
       return { error: 'NETWORK_ERROR' };

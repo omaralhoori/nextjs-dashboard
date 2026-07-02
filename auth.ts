@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import { authConfig } from './auth.config';
 import Credentials from 'next-auth/providers/credentials';
 import { z } from 'zod';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 // Types for NestJS API response
 interface NestJSUser {
@@ -22,7 +23,7 @@ interface NestJSAuthResponse {
 
 async function authenticateWithNestJS(mobileNo: string, password: string): Promise<NestJSAuthResponse | null> {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+    const response = await fetch(`${getServerApiUrl()}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -46,9 +47,8 @@ async function authenticateWithNestJS(mobileNo: string, password: string): Promi
 }
  
   
-export const { auth, signIn, signOut } = NextAuth({
+export const { auth, signIn, signOut, handlers } = NextAuth({
   ...authConfig,
-  trustHost: true, // Add this line to trust all hosts in development
   providers: [ 
     Credentials({
         async authorize(credentials) {

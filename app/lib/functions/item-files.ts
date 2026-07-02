@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 import { auth } from '@/auth';
 import type { 
@@ -6,7 +7,7 @@ import type {
   UploadImageResponse 
 } from '@/app/lib/definitions/item-file';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = getServerApiUrl();
 
 // Upload image for an item
 export async function uploadItemImageAction(itemId: string, formData: FormData): Promise<{ success: boolean; message: string; data?: UploadImageResponse }> {

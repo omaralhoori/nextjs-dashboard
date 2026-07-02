@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 import { auth } from '@/auth';
 import type {
@@ -16,7 +17,7 @@ async function getToken(): Promise<string | null> {
 async function adminFetch(path: string): Promise<Response | null> {
   const token = await getToken();
   if (!token) return null;
-  return fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+  return fetch(`${getServerApiUrl()}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: 'no-store',
   });

@@ -1,4 +1,5 @@
 'use server';
+import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 // ============================================================================
 // ITEM GROUP MANAGEMENT FUNCTIONS
@@ -21,7 +22,7 @@ export async function fetchItemGroupsAction(): Promise<ItemGroupsResponse | { er
       return { error: 'UNAUTHORIZED' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       console.error('NEXT_PUBLIC_API_URL environment variable is not set');
       return { error: 'NETWORK_ERROR' };
@@ -77,7 +78,7 @@ export async function fetchActiveItemGroupsAction(): Promise<ItemGroupsResponse 
       return { error: 'UNAUTHORIZED' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       console.error('NEXT_PUBLIC_API_URL environment variable is not set');
       return { error: 'NETWORK_ERROR' };
@@ -133,7 +134,7 @@ export async function fetchItemGroupStatsAction(): Promise<ItemGroupStatsRespons
       return { error: 'UNAUTHORIZED' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       console.error('NEXT_PUBLIC_API_URL environment variable is not set');
       return { error: 'NETWORK_ERROR' };
@@ -189,7 +190,7 @@ export async function fetchItemGroupByIdAction(itemGroupId: string): Promise<Ite
       return { error: 'UNAUTHORIZED' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       console.error('NEXT_PUBLIC_API_URL environment variable is not set');
       return { error: 'NETWORK_ERROR' };
@@ -244,7 +245,7 @@ export async function createItemGroupAction(itemGroupData: CreateItemGroupReques
       return { success: false, message: 'No access token available' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       return { success: false, message: 'API URL not configured' };
     }
@@ -278,7 +279,7 @@ export async function updateItemGroupAction(itemGroupId: string, itemGroupData: 
       return { success: false, message: 'No access token available' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       return { success: false, message: 'API URL not configured' };
     }
@@ -312,7 +313,7 @@ export async function toggleItemGroupActiveAction(itemGroupId: string): Promise<
       return { success: false, message: 'No access token available' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       return { success: false, message: 'API URL not configured' };
     }
@@ -345,7 +346,7 @@ export async function deleteItemGroupAction(itemGroupId: string): Promise<{ succ
       return { success: false, message: 'No access token available' };
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = getServerApiUrl();
     if (!apiUrl) {
       return { success: false, message: 'API URL not configured' };
     }
