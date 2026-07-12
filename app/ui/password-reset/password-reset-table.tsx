@@ -94,7 +94,13 @@ export default function PasswordResetTable({ requests, onRefresh }: PasswordRese
     }
     setResolveModal(prev => prev ? { ...prev, loading: true, error: null } : null);
 
-    const pwResult = await adminChangeUserPasswordAction(resolveModal.request.userId, resolveModal.newPassword);
+    const userId = resolveModal.request.userId ?? resolveModal.request.user?.id;
+    if (!userId) {
+      setResolveModal(prev => prev ? { ...prev, loading: false, error: 'User ID not found for this request' } : null);
+      return;
+    }
+
+    const pwResult = await adminChangeUserPasswordAction(userId, resolveModal.newPassword);
     if (!pwResult.success) {
       setResolveModal(prev => prev ? { ...prev, loading: false, error: pwResult.message } : null);
       return;

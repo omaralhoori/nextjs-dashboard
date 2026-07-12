@@ -872,6 +872,7 @@ Retrieve a list of password reset requests.
         "mobileNo": "+963933335555",
         "status": "pending",
         "adminNotes": null,
+        "userId": "uuid",
         "createdAt": "2026-06-15T01:10:00.000Z",
         "updatedAt": "2026-06-15T01:10:00.000Z",
         "user": {
