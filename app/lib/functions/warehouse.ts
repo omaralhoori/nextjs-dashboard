@@ -10,6 +10,7 @@ import type {
   WarehousesResponse,
   CreateWarehouseManagerResponse,
   WarehouseDetailsResponse,
+  Warehouse,
 } from '@/app/lib/definitions/warehouse';
 
 export async function createWarehouseAction(warehouseData: {
@@ -231,5 +232,125 @@ export async function fetchWarehouseDetailsAction(warehouseId: string): Promise<
       console.error('Network error - check if API server is running and accessible');
     }
     return { error: 'NETWORK_ERROR' };
+  }
+}
+
+function formatApiError(result: { message?: string | string[] }, fallback: string) {
+  if (Array.isArray(result.message)) return result.message.join(', ');
+  return result.message || fallback;
+}
+
+async function uploadWarehouseImage(file: File, token: string, apiUrl: string): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${apiUrl}/files/upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(formatApiError(result, 'Failed to upload warehouse image'));
+  }
+  if (!result.url) {
+    throw new Error('Upload succeeded but no image URL was returned');
+  }
+  return result.url as string;
+}
+
+export async function updateWarehouseAction(
+  warehouseId: string,
+  warehouseData: {
+    warehouse_name?: string;
+    district?: string;
+    phone?: string;
+    location?: string;
+    adminNotes?: string | null;
+    imageUrl?: string | null;
+    status?: 'enabled' | 'disabled';
+  },
+  imageFile?: File,
+): Promise<{ success: true; message: string; warehouse?: Warehouse } | { success: false; message: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.accessToken) {
+      return { success: false, message: 'No access token available' };
+    }
+
+    const apiUrl = getServerApiUrl();
+    if (!apiUrl) {
+      return { success: false, message: 'API URL not configured' };
+    }
+
+    const payload = { ...warehouseData };
+    if (imageFile) {
+      payload.imageUrl = await uploadWarehouseImage(imageFile, session.user.accessToken, apiUrl);
+    }
+
+    const response = await fetch(`${apiUrl}/admin/warehouses/${warehouseId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${session.user.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { success: false, message: formatApiError(result, 'Failed to update warehouse') };
+    }
+
+    return {
+      success: true,
+      message: result.message || 'Warehouse updated successfully',
+      warehouse: result.warehouse,
+    };
+  } catch (error) {
+    console.error('Error updating warehouse:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to update warehouse',
+    };
+  }
+}
+
+export async function toggleWarehouseStatusAction(
+  warehouseId: string,
+): Promise<{ success: true; message: string; warehouse?: Warehouse } | { success: false; message: string }> {
+  try {
+    const session = await auth();
+    if (!session?.user?.accessToken) {
+      return { success: false, message: 'No access token available' };
+    }
+
+    const apiUrl = getServerApiUrl();
+    if (!apiUrl) {
+      return { success: false, message: 'API URL not configured' };
+    }
+
+    const response = await fetch(`${apiUrl}/admin/warehouses/${warehouseId}/toggle-status`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${session.user.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { success: false, message: formatApiError(result, 'Failed to toggle warehouse status') };
+    }
+
+    return {
+      success: true,
+      message: result.message || 'Warehouse status updated',
+      warehouse: result.warehouse,
+    };
+  } catch (error) {
+    console.error('Error toggling warehouse status:', error);
+    return { success: false, message: 'Failed to toggle warehouse status' };
   }
 }

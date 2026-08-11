@@ -1,8 +1,22 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { XMarkIcon, UserIcon, PhoneIcon, MapPinIcon, CalendarIcon, BuildingOfficeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
-import { fetchWarehouseDetailsAction, fetchWarehouseDistrictsAction } from '@/app/lib/actions';
+import Image from 'next/image';
+import {
+  XMarkIcon,
+  UserIcon,
+  PhoneIcon,
+  MapPinIcon,
+  CalendarIcon,
+  BuildingOfficeIcon,
+  Cog6ToothIcon,
+  KeyIcon,
+} from '@heroicons/react/24/outline';
+import {
+  fetchWarehouseDetailsAction,
+  fetchWarehouseDistrictsAction,
+  adminChangeUserPasswordAction,
+} from '@/app/lib/actions';
 import type { WarehouseDetailsResponse, WarehouseUser, WarehouseDistrict } from '@/app/lib/definitions/warehouse';
 import WarehouseDistrictManagementModal from './warehouse-district-management-modal';
 
@@ -13,27 +27,32 @@ interface WarehouseDetailsModalProps {
   onClose: () => void;
 }
 
-export default function WarehouseDetailsModal({ 
-  warehouseId, 
-  warehouseName, 
-  isOpen, 
-  onClose 
+export default function WarehouseDetailsModal({
+  warehouseId,
+  warehouseName,
+  isOpen,
+  onClose,
 }: WarehouseDetailsModalProps) {
   const [warehouseDetails, setWarehouseDetails] = useState<WarehouseDetailsResponse | null>(null);
   const [warehouseDistricts, setWarehouseDistricts] = useState<WarehouseDistrict[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDistrictModalOpen, setIsDistrictModalOpen] = useState(false);
+  const [passwordUser, setPasswordUser] = useState<WarehouseUser | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const fetchWarehouseDetails = useCallback(async () => {
     if (!warehouseId) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await fetchWarehouseDetailsAction(warehouseId);
-      
+
       if ('error' in result) {
         switch (result.error) {
           case 'UNAUTHORIZED':
@@ -61,10 +80,10 @@ export default function WarehouseDetailsModal({
 
   const fetchWarehouseDistricts = useCallback(async () => {
     if (!warehouseId) return;
-    
+
     try {
       const result = await fetchWarehouseDistrictsAction(warehouseId);
-      
+
       if ('error' in result) {
         console.error('Error fetching warehouse districts:', result.error);
       } else {
@@ -80,11 +99,14 @@ export default function WarehouseDetailsModal({
       fetchWarehouseDetails();
       fetchWarehouseDistricts();
     } else if (!isOpen) {
-      // Reset state when modal closes
       setWarehouseDetails(null);
       setWarehouseDistricts([]);
       setError(null);
       setLoading(false);
+      setPasswordUser(null);
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordMessage(null);
     }
   }, [isOpen, warehouseId, fetchWarehouseDetails, fetchWarehouseDistricts]);
 
@@ -120,12 +142,50 @@ export default function WarehouseDetailsModal({
     }
   };
 
+  const openPasswordForm = (user: WarehouseUser) => {
+    setPasswordUser(user);
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordMessage(null);
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordUser) return;
+
+    if (newPassword.length < 6) {
+      setPasswordMessage({ type: 'error', text: 'Password must be at least 6 characters.' });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage({ type: 'error', text: 'Passwords do not match.' });
+      return;
+    }
+
+    setPasswordLoading(true);
+    setPasswordMessage(null);
+    const result = await adminChangeUserPasswordAction(passwordUser.id, newPassword);
+    setPasswordLoading(false);
+
+    if (!result.success) {
+      setPasswordMessage({ type: 'error', text: result.message || 'Failed to change password.' });
+      return;
+    }
+
+    setPasswordMessage({ type: 'success', text: 'Password updated successfully.' });
+    setNewPassword('');
+    setConfirmPassword('');
+    setTimeout(() => {
+      setPasswordUser(null);
+      setPasswordMessage(null);
+    }, 1200);
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <BuildingOfficeIcon className="h-6 w-6 text-gray-600" />
@@ -141,7 +201,6 @@ export default function WarehouseDetailsModal({
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
           {loading && (
             <div className="flex items-center justify-center py-8">
@@ -168,12 +227,24 @@ export default function WarehouseDetailsModal({
 
           {warehouseDetails && (
             <div className="space-y-6">
-              {/* Warehouse Information */}
               <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  {warehouseDetails.warehouse.warehouse_name}
-                </h3>
-                
+                <div className="flex items-start gap-4 mb-4">
+                  {warehouseDetails.warehouse.imageUrl ? (
+                    <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-white border border-gray-200 shrink-0">
+                      <Image
+                        src={warehouseDetails.warehouse.imageUrl}
+                        alt={warehouseDetails.warehouse.warehouse_name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  ) : null}
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {warehouseDetails.warehouse.warehouse_name}
+                  </h3>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-start space-x-3">
                     <PhoneIcon className="h-5 w-5 text-gray-400 mt-0.5" />
@@ -182,7 +253,7 @@ export default function WarehouseDetailsModal({
                       <p className="text-sm text-gray-600">{warehouseDetails.warehouse.phone}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start space-x-3">
                     <MapPinIcon className="h-5 w-5 text-gray-400 mt-0.5" />
                     <div>
@@ -190,7 +261,7 @@ export default function WarehouseDetailsModal({
                       <p className="text-sm text-gray-600">{warehouseDetails.warehouse.location}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start space-x-3">
                     <CalendarIcon className="h-5 w-5 text-gray-400 mt-0.5" />
                     <div>
@@ -200,7 +271,7 @@ export default function WarehouseDetailsModal({
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start space-x-3">
                     <div className="h-5 w-5 mt-0.5" />
                     <div>
@@ -220,7 +291,6 @@ export default function WarehouseDetailsModal({
                 )}
               </div>
 
-              {/* Users Section */}
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -228,6 +298,55 @@ export default function WarehouseDetailsModal({
                     Users ({warehouseDetails.userCount})
                   </h3>
                 </div>
+
+                {passwordUser && (
+                  <form
+                    onSubmit={handleChangePassword}
+                    className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-gray-900">
+                        Change password for {passwordUser.userName}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setPasswordUser(null)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <XMarkIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={e => setNewPassword(e.target.value)}
+                        placeholder="New password (min 6)"
+                        className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-[#007476] focus:outline-none focus:ring-1 focus:ring-[#007476]"
+                      />
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={e => setConfirmPassword(e.target.value)}
+                        placeholder="Confirm password"
+                        className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-[#007476] focus:outline-none focus:ring-1 focus:ring-[#007476]"
+                      />
+                    </div>
+                    {passwordMessage && (
+                      <p className={`text-sm ${passwordMessage.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
+                        {passwordMessage.text}
+                      </p>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={passwordLoading}
+                      className="px-3 py-1.5 text-sm font-medium text-white rounded-md disabled:opacity-50"
+                      style={{ backgroundColor: '#007476' }}
+                    >
+                      {passwordLoading ? 'Updating…' : 'Update Password'}
+                    </button>
+                  </form>
+                )}
 
                 {warehouseDetails.users.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
@@ -251,6 +370,9 @@ export default function WarehouseDetailsModal({
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Created
+                            </th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
                             </th>
                           </tr>
                         </thead>
@@ -280,6 +402,17 @@ export default function WarehouseDetailsModal({
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {formatDate(user.createdAt)}
                               </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => openPasswordForm(user)}
+                                  className="inline-flex items-center gap-1 text-sm text-[#007476] hover:underline"
+                                  title="Change password"
+                                >
+                                  <KeyIcon className="h-4 w-4" />
+                                  Password
+                                </button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -289,7 +422,6 @@ export default function WarehouseDetailsModal({
                 )}
               </div>
 
-              {/* Districts Section */}
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -340,8 +472,8 @@ export default function WarehouseDetailsModal({
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  district.active 
-                                    ? 'bg-green-100 text-green-800' 
+                                  district.active
+                                    ? 'bg-green-100 text-green-800'
                                     : 'bg-red-100 text-red-800'
                                 }`}>
                                   {district.active ? 'Active' : 'Inactive'}
@@ -359,7 +491,6 @@ export default function WarehouseDetailsModal({
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex justify-end p-6 border-t border-gray-200 bg-gray-50">
           <button
             onClick={onClose}
@@ -370,14 +501,12 @@ export default function WarehouseDetailsModal({
         </div>
       </div>
 
-      {/* Warehouse District Management Modal */}
       <WarehouseDistrictManagementModal
         warehouseId={warehouseId}
         warehouseName={warehouseName}
         isOpen={isDistrictModalOpen}
         onClose={() => {
           setIsDistrictModalOpen(false);
-          // Refresh districts when modal closes
           fetchWarehouseDistricts();
         }}
       />

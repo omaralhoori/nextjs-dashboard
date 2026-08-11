@@ -84,3 +84,13 @@ export interface WarehouseDistrictsResponse {
 export interface AddDistrictToWarehouseRequest {
   districtId: string;
 }
+
+export interface UpdateWarehouseRequest {
+  warehouse_name?: string;
+  district?: string;
+  phone?: string;
+  location?: string;
+  adminNotes?: string | null;
+  imageUrl?: string | null;
+  status?: 'enabled' | 'disabled';
+}
