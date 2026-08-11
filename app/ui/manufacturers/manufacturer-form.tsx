@@ -60,8 +60,6 @@ export default function ManufacturerForm({
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
     if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.code.trim()) newErrors.code = 'Code is required';
-    if (!formData.country.trim()) newErrors.country = 'Country is required';
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       newErrors.email = 'Please enter a valid email address';
     if (formData.website && !/^https?:\/\/.+/.test(formData.website))
@@ -92,15 +90,15 @@ export default function ManufacturerForm({
     if (!validateForm()) return;
     const submitData = {
       name: formData.name.trim(),
-      code: formData.code.trim(),
-      country: formData.country.trim(),
+      code: formData.code.trim() || undefined,
+      country: formData.country.trim() || undefined,
       email: formData.email.trim() || undefined,
       website: formData.website.trim() || undefined,
       description: formData.description.trim() || undefined,
       phone: formData.phone.trim() || undefined,
     };
+    // Parent closes the form only after a successful save.
     await onSubmit(submitData, imageFile || undefined);
-    handleClose();
   };
 
   const handleClose = () => {
@@ -201,14 +199,14 @@ export default function ManufacturerForm({
 
           {/* Code Field */}
           <div>
-            <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">Code *</label>
+            <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">Code</label>
             <input
               type="text"
               id="code"
               value={formData.code}
               onChange={e => handleInputChange('code', e.target.value.toUpperCase())}
               className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${errors.code ? 'border-red-300' : 'border-gray-300'}`}
-              placeholder="Enter manufacturer code"
+              placeholder="Enter manufacturer code (optional)"
               disabled={loading}
             />
             {errors.code && <p className="mt-1 text-sm text-red-600">{errors.code}</p>}
@@ -216,14 +214,14 @@ export default function ManufacturerForm({
 
           {/* Country Field */}
           <div>
-            <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+            <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">Country</label>
             <input
               type="text"
               id="country"
               value={formData.country}
               onChange={e => handleInputChange('country', e.target.value)}
               className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${errors.country ? 'border-red-300' : 'border-gray-300'}`}
-              placeholder="Enter country"
+              placeholder="Enter country (optional)"
               disabled={loading}
             />
             {errors.country && <p className="mt-1 text-sm text-red-600">{errors.country}</p>}

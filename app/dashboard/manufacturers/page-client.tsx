@@ -58,7 +58,9 @@ export default function ManufacturersPageClient() {
   const filtered = items.filter(item => {
     if (search) {
       const q = search.toLowerCase();
-      if (!item.name.toLowerCase().includes(q) && !item.code.toLowerCase().includes(q)) return false;
+      const nameMatch = item.name?.toLowerCase().includes(q);
+      const codeMatch = item.code?.toLowerCase().includes(q);
+      if (!nameMatch && !codeMatch) return false;
     }
     if (statusFilter === 'active' && !item.active) return false;
     if (statusFilter === 'inactive' && item.active) return false;
@@ -120,7 +122,9 @@ export default function ManufacturersPageClient() {
             </div>
           ) : (
             <div className="w-9 h-9 rounded-md bg-gray-100 flex-shrink-0 flex items-center justify-center">
-              <span className="text-xs font-bold text-gray-400">{row.code.slice(0, 2)}</span>
+              <span className="text-xs font-bold text-gray-400">
+                {(row.code || row.name || '?').slice(0, 2).toUpperCase()}
+              </span>
             </div>
           )}
           <div>
@@ -134,13 +138,13 @@ export default function ManufacturersPageClient() {
       key: 'code',
       header: 'Code',
       render: (row: Manufacturer) => (
-        <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{row.code}</span>
+        <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">{row.code || '—'}</span>
       ),
     },
     {
       key: 'country',
       header: 'Country',
-      render: (row: Manufacturer) => <span className="text-gray-700">{row.country}</span>,
+      render: (row: Manufacturer) => <span className="text-gray-700">{row.country || '—'}</span>,
     },
     {
       key: 'contact',
@@ -218,12 +222,14 @@ export default function ManufacturersPageClient() {
                       </div>
                     ) : (
                       <div className="w-9 h-9 rounded-md bg-gray-100 flex-shrink-0 flex items-center justify-center">
-                        <span className="text-xs font-bold text-gray-400">{row.code.slice(0, 2)}</span>
+                        <span className="text-xs font-bold text-gray-400">
+                          {(row.code || row.name || '?').slice(0, 2).toUpperCase()}
+                        </span>
                       </div>
                     )}
                     <div className="min-w-0">
                       <div className="font-medium text-gray-900">{row.name}</div>
-                      <div className="text-xs text-gray-500">{row.code} · {row.country}</div>
+                      <div className="text-xs text-gray-500">{row.code || '—'} · {row.country || '—'}</div>
                     </div>
                   </div>
                   <StatusBadge active={row.active} />

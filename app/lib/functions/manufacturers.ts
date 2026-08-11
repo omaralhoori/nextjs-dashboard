@@ -2,32 +2,58 @@
 import { getServerApiUrl } from '@/app/lib/server-api-url';
 
 import { auth } from '@/auth';
-import type { 
-  ManufacturersResponse, 
+import type {
+  ManufacturersResponse,
   ManufacturerStatsResponse,
   CreateManufacturerRequest,
-  UpdateManufacturerRequest 
+  UpdateManufacturerRequest,
 } from '@/app/lib/definitions/manufacturer';
 
 const API_BASE_URL = getServerApiUrl() || 'http://localhost:3001';
 
 async function getAuthHeaders() {
   const session = await auth();
-  
+
   if (!session?.user?.accessToken) {
     throw new Error('UNAUTHORIZED');
   }
 
   return {
-    'Authorization': `Bearer ${session.user.accessToken}`,
+    Authorization: `Bearer ${session.user.accessToken}`,
     'Content-Type': 'application/json',
   };
+}
+
+function formatApiError(result: { message?: string | string[] }, fallback: string) {
+  if (Array.isArray(result.message)) return result.message.join(', ');
+  return result.message || fallback;
+}
+
+/** Upload image via /files/upload and return the public URL. */
+async function uploadManufacturerImage(file: File, token: string): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/files/upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(formatApiError(result, 'Failed to upload manufacturer image'));
+  }
+  if (!result.url) {
+    throw new Error('Upload succeeded but no image URL was returned');
+  }
+  return result.url as string;
 }
 
 export async function fetchManufacturersAction() {
   try {
     const headers = await getAuthHeaders();
-    
+
     const response = await fetch(`${API_BASE_URL}/manufacturers?limit=500`, {
       method: 'GET',
       headers,
@@ -55,7 +81,7 @@ export async function fetchManufacturersAction() {
 export async function fetchActiveManufacturersAction() {
   try {
     const headers = await getAuthHeaders();
-    
+
     const response = await fetch(`${API_BASE_URL}/manufacturers/active`, {
       method: 'GET',
       headers,
@@ -83,7 +109,7 @@ export async function fetchActiveManufacturersAction() {
 export async function fetchManufacturerStatsAction() {
   try {
     const headers = await getAuthHeaders();
-    
+
     const response = await fetch(`${API_BASE_URL}/manufacturers/stats`, {
       method: 'GET',
       headers,
@@ -111,7 +137,7 @@ export async function fetchManufacturerStatsAction() {
 export async function fetchManufacturerByIdAction(manufacturerId: string) {
   try {
     const headers = await getAuthHeaders();
-    
+
     const response = await fetch(`${API_BASE_URL}/manufacturers/${manufacturerId}`, {
       method: 'GET',
       headers,
@@ -145,80 +171,80 @@ export async function createManufacturerAction(data: CreateManufacturerRequest, 
     if (!session?.user?.accessToken) throw new Error('UNAUTHORIZED');
     const token = session.user.accessToken;
 
-    let body: BodyInit;
-    let headers: Record<string, string> = { Authorization: `Bearer ${token}` };
-
+    const payload: CreateManufacturerRequest = { ...data };
     if (imageFile) {
-      const formData = new FormData();
-      Object.entries(data).forEach(([k, v]) => { if (v !== undefined) formData.append(k, String(v)); });
-      formData.append('image', imageFile);
-      body = formData;
-    } else {
-      headers['Content-Type'] = 'application/json';
-      body = JSON.stringify(data);
+      payload.imageUrl = await uploadManufacturerImage(imageFile, token);
     }
 
     const response = await fetch(`${API_BASE_URL}/manufacturers`, {
       method: 'POST',
-      headers,
-      body,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
     });
 
     const result = await response.json();
 
     if (!response.ok) {
-      return { success: false, message: result.message || 'Failed to create manufacturer' };
+      return { success: false, message: formatApiError(result, 'Failed to create manufacturer') };
     }
 
     return { success: true, message: result.message, manufacturer: result.manufacturer };
   } catch (error) {
     console.error('Error creating manufacturer:', error);
-    return { success: false, message: 'Failed to create manufacturer' };
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to create manufacturer',
+    };
   }
 }
 
-export async function updateManufacturerAction(manufacturerId: string, data: UpdateManufacturerRequest, imageFile?: File) {
+export async function updateManufacturerAction(
+  manufacturerId: string,
+  data: UpdateManufacturerRequest,
+  imageFile?: File,
+) {
   try {
     const session = await auth();
     if (!session?.user?.accessToken) throw new Error('UNAUTHORIZED');
     const token = session.user.accessToken;
 
-    let body: BodyInit;
-    let headers: Record<string, string> = { Authorization: `Bearer ${token}` };
-
+    const payload: UpdateManufacturerRequest = { ...data };
     if (imageFile) {
-      const formData = new FormData();
-      Object.entries(data).forEach(([k, v]) => { if (v !== undefined) formData.append(k, String(v)); });
-      formData.append('image', imageFile);
-      body = formData;
-    } else {
-      headers['Content-Type'] = 'application/json';
-      body = JSON.stringify(data);
+      payload.imageUrl = await uploadManufacturerImage(imageFile, token);
     }
 
     const response = await fetch(`${API_BASE_URL}/manufacturers/${manufacturerId}`, {
       method: 'PATCH',
-      headers,
-      body,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
     });
 
     const result = await response.json();
 
     if (!response.ok) {
-      return { success: false, message: result.message || 'Failed to update manufacturer' };
+      return { success: false, message: formatApiError(result, 'Failed to update manufacturer') };
     }
 
     return { success: true, message: result.message, manufacturer: result.manufacturer };
   } catch (error) {
     console.error('Error updating manufacturer:', error);
-    return { success: false, message: 'Failed to update manufacturer' };
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to update manufacturer',
+    };
   }
 }
 
 export async function toggleManufacturerActiveAction(manufacturerId: string) {
   try {
     const headers = await getAuthHeaders();
-    
+
     const response = await fetch(`${API_BASE_URL}/manufacturers/${manufacturerId}/toggle-active`, {
       method: 'PATCH',
       headers,
@@ -229,7 +255,7 @@ export async function toggleManufacturerActiveAction(manufacturerId: string) {
     if (!response.ok) {
       return {
         success: false,
-        message: result.message || 'Failed to toggle manufacturer status',
+        message: formatApiError(result, 'Failed to toggle manufacturer status'),
       };
     }
 
@@ -250,7 +276,7 @@ export async function toggleManufacturerActiveAction(manufacturerId: string) {
 export async function deleteManufacturerAction(manufacturerId: string) {
   try {
     const headers = await getAuthHeaders();
-    
+
     const response = await fetch(`${API_BASE_URL}/manufacturers/${manufacturerId}`, {
       method: 'DELETE',
       headers,
@@ -261,7 +287,7 @@ export async function deleteManufacturerAction(manufacturerId: string) {
     if (!response.ok) {
       return {
         success: false,
-        message: result.message || 'Failed to delete manufacturer',
+        message: formatApiError(result, 'Failed to delete manufacturer'),
       };
     }
 

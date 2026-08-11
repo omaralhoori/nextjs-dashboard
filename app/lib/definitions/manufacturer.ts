@@ -1,9 +1,9 @@
 export interface Manufacturer {
   id: string;
   name: string;
-  code: string;
+  code?: string | null;
   description?: string | null;
-  country: string;
+  country?: string | null;
   phone?: string | null;
   email?: string | null;
   website?: string | null;
@@ -32,8 +32,8 @@ export interface ManufacturerStatsResponse {
 
 export interface CreateManufacturerRequest {
   name: string;
-  code: string;
-  country: string;
+  code?: string;
+  country?: string;
   email?: string;
   website?: string;
   description?: string;
