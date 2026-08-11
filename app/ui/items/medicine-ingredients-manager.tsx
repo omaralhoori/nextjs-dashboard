@@ -76,7 +76,7 @@ export default function MedicineIngredientsManager({
 
   const fetchAvailableIngredients = async () => {
     try {
-      const result = await fetchActiveIngredientsAction();
+      const result = await fetchActiveIngredientsAction(1, 500);
       
       if ('error' in result) {
         console.error('Error fetching available ingredients:', result.error);
@@ -88,9 +88,13 @@ export default function MedicineIngredientsManager({
     }
   };
 
-  const filteredIngredients = availableIngredients.filter(ingredient =>
-    ingredient.active_ingredient_name.toLowerCase().includes(ingredientSearch.toLowerCase())
-  );
+  const filteredIngredients = availableIngredients.filter(ingredient => {
+    const q = ingredientSearch.toLowerCase();
+    if (!q) return true;
+    const nameMatch = ingredient.active_ingredient_name?.toLowerCase().includes(q);
+    const arabicMatch = ingredient.arabic_name?.toLowerCase().includes(q);
+    return Boolean(nameMatch || arabicMatch);
+  });
 
   const handleAddIngredient = async (e: React.FormEvent) => {
     e.preventDefault();

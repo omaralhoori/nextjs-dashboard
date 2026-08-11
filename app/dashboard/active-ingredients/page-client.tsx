@@ -15,18 +15,24 @@ import {
   updateActiveIngredientAction,
   deleteActiveIngredientAction,
 } from '@/app/lib/functions/active-ingredients';
-import type { ActiveIngredient, CreateActiveIngredientRequest, UpdateActiveIngredientRequest } from '@/app/lib/definitions/active-ingredient';
+import type {
+  ActiveIngredient,
+  CreateActiveIngredientRequest,
+  UpdateActiveIngredientRequest,
+} from '@/app/lib/definitions/active-ingredient';
 import { formatDateToLocal } from '@/app/lib/utils';
 
 const PAGE_SIZE = 20;
 
 export default function ActiveIngredientsPageClient() {
   const [items, setItems] = useState<ActiveIngredient[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [permError, setPermError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ActiveIngredient | null>(null);
@@ -34,24 +40,27 @@ export default function ActiveIngredientsPageClient() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const result = await fetchActiveIngredientsAction();
+    const result = await fetchActiveIngredientsAction(page, PAGE_SIZE, debouncedSearch || undefined);
     if ('error' in result) {
       setPermError(result.error);
     } else {
       setItems(result.activeIngredients || []);
+      setTotal(result.pagination?.total ?? result.total ?? 0);
     }
     setLoading(false);
-  }, []);
+  }, [page, debouncedSearch]);
 
   useEffect(() => { load(); }, [load]);
 
-  const filtered = items.filter(item => {
-    if (search && !item.active_ingredient_name.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const openEdit = (item: ActiveIngredient) => { setEditingItem(item); setIsFormOpen(true); };
   const openCreate = () => { setEditingItem(null); setIsFormOpen(true); };
@@ -84,8 +93,17 @@ export default function ActiveIngredientsPageClient() {
   const columns = [
     {
       key: 'name',
-      header: 'Ingredient Name',
+      header: 'Name (English)',
       render: (row: ActiveIngredient) => <span className="font-medium text-gray-900">{row.active_ingredient_name}</span>,
+    },
+    {
+      key: 'arabic_name',
+      header: 'Name (Arabic)',
+      render: (row: ActiveIngredient) => (
+        <span className="text-sm text-gray-700" dir="rtl">
+          {row.arabic_name || '—'}
+        </span>
+      ),
     },
     {
       key: 'created_at',
@@ -113,7 +131,7 @@ export default function ActiveIngredientsPageClient() {
   return (
     <PageShell
       title="Active Ingredients"
-      count={filtered.length}
+      count={total}
       createLabel="New Ingredient"
       onCreate={openCreate}
       successMessage={successMsg}
@@ -122,22 +140,29 @@ export default function ActiveIngredientsPageClient() {
       onClearError={() => setErrorMsg(null)}
       filters={
         <FilterBar>
-          <SearchInput value={search} onChange={v => { setSearch(v); setPage(1); }} placeholder="Search ingredient name…" />
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Search English or Arabic name…"
+          />
         </FilterBar>
       }
     >
       {loading ? (
-        <TableSkeleton cols={4} rows={6} />
+        <TableSkeleton cols={5} rows={6} />
       ) : (
         <div className="space-y-3">
           <DataTable
             columns={columns}
-            rows={pageItems}
+            rows={items}
             keyExtractor={r => r.id}
             emptyMessage="No active ingredients found"
             mobileCard={row => (
               <div className="space-y-1">
                 <div className="font-medium text-gray-900">{row.active_ingredient_name}</div>
+                {row.arabic_name ? (
+                  <div className="text-sm text-gray-600" dir="rtl">{row.arabic_name}</div>
+                ) : null}
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">{formatDateToLocal(row.created_at)}</span>
                   <div className="flex gap-1">
@@ -151,7 +176,7 @@ export default function ActiveIngredientsPageClient() {
           <PaginationBar
             currentPage={page}
             totalPages={totalPages}
-            totalItems={filtered.length}
+            totalItems={total}
             pageSize={PAGE_SIZE}
             onPageChange={setPage}
           />

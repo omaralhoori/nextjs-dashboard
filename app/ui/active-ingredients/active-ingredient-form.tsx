@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import type { 
-  ActiveIngredient, 
-  CreateActiveIngredientRequest, 
-  UpdateActiveIngredientRequest 
+import type {
+  ActiveIngredient,
+  CreateActiveIngredientRequest,
+  UpdateActiveIngredientRequest,
 } from '@/app/lib/definitions/active-ingredient';
 
 interface ActiveIngredientFormProps {
@@ -25,24 +25,26 @@ export default function ActiveIngredientForm({
 }: ActiveIngredientFormProps) {
   const [formData, setFormData] = useState({
     active_ingredient_name: '',
+    arabic_name: '',
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const isEditing = !!activeIngredient;
 
-  // Update form data when activeIngredient prop changes
   useEffect(() => {
     if (activeIngredient) {
       setFormData({
         active_ingredient_name: activeIngredient.active_ingredient_name || '',
+        arabic_name: activeIngredient.arabic_name || '',
       });
     } else {
       setFormData({
         active_ingredient_name: '',
+        arabic_name: '',
       });
     }
     setErrors({});
-  }, [activeIngredient]);
+  }, [activeIngredient, isOpen]);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -57,12 +59,15 @@ export default function ActiveIngredientForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
-    onSubmit(formData);
+    onSubmit({
+      active_ingredient_name: formData.active_ingredient_name.trim(),
+      arabic_name: formData.arabic_name.trim() || undefined,
+    });
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -70,8 +75,7 @@ export default function ActiveIngredientForm({
       ...prev,
       [field]: value,
     }));
-    
-    // Clear error when user starts typing
+
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -83,6 +87,7 @@ export default function ActiveIngredientForm({
   const handleClose = () => {
     setFormData({
       active_ingredient_name: '',
+      arabic_name: '',
     });
     setErrors({});
     onClose();
@@ -107,10 +112,9 @@ export default function ActiveIngredientForm({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Active Ingredient Name */}
           <div>
             <label htmlFor="active_ingredient_name" className="block text-sm font-medium text-gray-700 mb-1">
-              Active Ingredient Name *
+              Name (English) *
             </label>
             <input
               type="text"
@@ -120,15 +124,31 @@ export default function ActiveIngredientForm({
               className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500 ${
                 errors.active_ingredient_name ? 'border-red-300' : 'border-gray-300'
               }`}
-              placeholder="Enter active ingredient name"
+              placeholder="e.g. Paracetamol"
               disabled={loading}
+              dir="ltr"
             />
             {errors.active_ingredient_name && (
               <p className="mt-1 text-sm text-red-600">{errors.active_ingredient_name}</p>
             )}
           </div>
 
-          {/* Form Actions */}
+          <div>
+            <label htmlFor="arabic_name" className="block text-sm font-medium text-gray-700 mb-1">
+              Name (Arabic)
+            </label>
+            <input
+              type="text"
+              id="arabic_name"
+              value={formData.arabic_name}
+              onChange={(e) => handleInputChange('arabic_name', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500"
+              placeholder="مثال: باراسيتامول"
+              disabled={loading}
+              dir="rtl"
+            />
+          </div>
+
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"

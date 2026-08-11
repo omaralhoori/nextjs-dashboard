@@ -30,6 +30,7 @@ export interface MedicineIngredientResponse {
 export interface ActiveIngredient {
   id: string;
   active_ingredient_name: string;
+  arabic_name?: string | null;
   created_at: string;
   updated_at: string;
 }
