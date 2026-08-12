@@ -72,6 +72,7 @@ export interface ItemsResponse {
   message: string;
   items: Item[];
   total: number;
+  hasMore?: boolean;
 }
 
 export interface ItemStats {

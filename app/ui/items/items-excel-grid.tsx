@@ -174,6 +174,15 @@ export default function ItemsExcelGrid({
     }
   }, [hasMore, loadingMore, onLoadMore]);
 
+  // If the first page does not fill the scroll area, keep loading until it does (or no more).
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !hasMore || loadingMore) return;
+    if (el.scrollHeight - el.clientHeight < 320) {
+      onLoadMore();
+    }
+  }, [items.length, hasMore, loadingMore, onLoadMore]);
+
   const st = (id: string, field: string): CellStatus => cellStatus[`${id}:${field}`];
 
   const HEAD = 'px-2 py-2.5 text-left text-xs font-semibold text-white/90 uppercase tracking-wide whitespace-nowrap border-r border-white/10';

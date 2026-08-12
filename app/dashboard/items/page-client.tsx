@@ -65,6 +65,8 @@ export default function ItemsPageClient() {
 
   // Guards against overlapping/duplicate fetches during infinite scroll.
   const loadingRef = useRef(false);
+  // Row offset for the next page request (backend uses row offset, not page index).
+  const nextOffsetRef = useRef(0);
 
   const filters = {
     search: debouncedSearch || undefined,
@@ -92,6 +94,7 @@ export default function ItemsPageClient() {
   // Reset + first page whenever filters change.
   const reload = useCallback(async () => {
     loadingRef.current = true;
+    nextOffsetRef.current = 0;
     setLoading(true);
     const result = await fetchItemsAction({ ...filters, limit: PAGE_SIZE, offset: 0 });
     if ('error' in result) {
@@ -99,6 +102,7 @@ export default function ItemsPageClient() {
     } else {
       setItems(result.items);
       setTotal(result.total ?? result.items.length);
+      nextOffsetRef.current = result.items.length;
     }
     setLoading(false);
     loadingRef.current = false;
@@ -109,19 +113,37 @@ export default function ItemsPageClient() {
     if (loadingRef.current) return;
     loadingRef.current = true;
     setLoadingMore(true);
-    const result = await fetchItemsAction({ ...filters, limit: PAGE_SIZE, offset: items.length });
+    const offset = nextOffsetRef.current;
+    const result = await fetchItemsAction({ ...filters, limit: PAGE_SIZE, offset });
     if (!('error' in result)) {
+      const incoming = result.items || [];
+      let freshCount = 0;
+      let nextLen = 0;
+
       setItems((prev) => {
         const seen = new Set(prev.map((p) => p.id));
-        const fresh = result.items.filter((it) => !seen.has(it.id));
-        return [...prev, ...fresh];
+        const fresh = incoming.filter((it) => !seen.has(it.id));
+        freshCount = fresh.length;
+        const next = fresh.length ? [...prev, ...fresh] : prev;
+        nextLen = next.length;
+        return next;
       });
-      setTotal(result.total ?? items.length + result.items.length);
+
+      // Advance by how many rows the API returned (row-based pagination).
+      nextOffsetRef.current = offset + incoming.length;
+
+      if (incoming.length === 0 || freshCount === 0 || result.hasMore === false) {
+        setTotal(nextLen);
+      } else if (typeof result.total === 'number') {
+        setTotal(result.total);
+      } else {
+        setTotal(nextLen + (incoming.length >= PAGE_SIZE ? PAGE_SIZE : 0));
+      }
     }
     setLoadingMore(false);
     loadingRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length, debouncedSearch, manufacturerFilter, itemGroupFilter, drugClassFilter, enabledFilter]);
+  }, [debouncedSearch, manufacturerFilter, itemGroupFilter, drugClassFilter, enabledFilter]);
 
   useEffect(() => { loadReferenceData(); }, [loadReferenceData]);
   useEffect(() => { reload(); }, [reload]);
