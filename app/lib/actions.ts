@@ -160,3 +160,7 @@ export {
   resolvePasswordResetRequestAction,
   rejectPasswordResetRequestAction,
 } from '@/app/lib/functions/password-reset';
+
+export {
+  broadcastNotificationAction,
+} from '@/app/lib/functions/notifications';
