@@ -70,6 +70,34 @@ export interface UploadedDocument {
 export interface RegisteredUserDetails {
   message: string;
   user: RegisteredUser;
+  pharmacy?: {
+    id: string;
+    pharmacy_name: string;
+    district: string;
+    phone: string;
+    status: string;
+    adminNotes: string | null;
+    hasUploadedDocuments: boolean;
+    documentUploadDate: string | null;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
   profileImages: ProfileImage[];
   uploadedDocuments: UploadedDocument[];
+}
+
+export interface UpdatePharmacyRequest {
+  pharmacy_name?: string;
+  phone?: string;
+  district?: string;
+  adminNotes?: string | null;
+  status?: 'Pending' | 'Active' | 'Disabled';
+  pharmacyNameAr?: string;
+  pharmacyNameEn?: string;
+  licenseOwnerName?: string;
+  governorate?: string;
+  administrativeDivision?: string;
+  area?: string;
+  detailedAddress?: string;
+  landlineNumber?: string | null;
 }

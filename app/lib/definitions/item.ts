@@ -66,6 +66,13 @@ export interface Item {
     created_at: string;
     updated_at: string;
   };
+  active_ingredients?: Array<{
+    id: string;
+    active_ingredient_name: string;
+    arabic_name?: string;
+    strength?: string;
+  }>;
+  exists_in_warehouse?: boolean;
 }
 
 export interface ItemsResponse {

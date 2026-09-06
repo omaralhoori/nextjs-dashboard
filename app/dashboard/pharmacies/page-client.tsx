@@ -6,15 +6,17 @@ import {
   NoSymbolIcon, PhotoIcon, DocumentTextIcon,
   BuildingOfficeIcon, UserIcon, PhoneIcon,
   MapPinIcon, IdentificationIcon, ArrowDownTrayIcon,
-  ChevronLeftIcon, ChevronRightIcon,
+  ChevronLeftIcon, ChevronRightIcon, PencilSquareIcon,
 } from '@heroicons/react/24/outline';
 import PageShell from '@/app/ui/page-shell';
 import { TableSkeleton } from '@/app/ui/data-table';
 import PermissionError from '@/app/ui/permission-error';
+import EditPharmacyForm from '@/app/ui/pharmacies/edit-pharmacy-form';
 import {
   fetchPharmacyAccountsAction,
   fetchIndependentPharmacistsAction,
   fetchRegisteredUserDetailAction,
+  updatePharmacyAction,
   type RegisteredUsersFilters,
 } from '@/app/lib/functions/registered-users';
 import { enableUserAction, disableUserAction } from '@/app/lib/functions/users';
@@ -23,6 +25,7 @@ import type {
   RegisteredUserDetails,
   PharmacyProfile,
   IndependentPharmacistProfile,
+  UpdatePharmacyRequest,
 } from '@/app/lib/definitions/registered-user';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -124,22 +127,32 @@ function UserDetailModal({
   userId,
   onClose,
   onStatusChange,
+  onUpdated,
   onError,
+  onSuccess,
 }: {
   userId: string;
   onClose: () => void;
   onStatusChange: () => void;
+  onUpdated: () => void;
   onError: (msg: string) => void;
+  onSuccess: (msg: string) => void;
 }) {
   const [details, setDetails] = useState<RegisteredUserDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const loadDetails = async () => {
+    setLoading(true);
+    const res = await fetchRegisteredUserDetailAction(userId);
+    if (!('error' in res)) setDetails(res);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    fetchRegisteredUserDetailAction(userId).then(res => {
-      if (!('error' in res)) setDetails(res);
-      setLoading(false);
-    });
+    loadDetails();
   }, [userId]);
 
   const handleToggle = async () => {
@@ -158,7 +171,26 @@ function UserDetailModal({
     }
   };
 
+  const handleSavePharmacy = async (data: UpdatePharmacyRequest) => {
+    if (!details?.pharmacy?.id) {
+      onError('No pharmacy record linked to this user');
+      return;
+    }
+    setSaving(true);
+    const res = await updatePharmacyAction(details.pharmacy.id, data);
+    setSaving(false);
+    if (!res.success) {
+      onError(res.message);
+      return;
+    }
+    onSuccess(res.message);
+    setEditing(false);
+    await loadDetails();
+    onUpdated();
+  };
+
   const isPharmacy = details?.user.accountType === 'Pharmacy_Account';
+  const canEditPharmacy = isPharmacy && !!details?.pharmacy?.id;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -167,9 +199,20 @@ function UserDetailModal({
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 px-5 py-4 bg-white">
           <h2 className="text-base font-semibold text-gray-900">User Details</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100">
-            <XMarkIcon className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {canEditPharmacy && (
+              <button
+                onClick={() => setEditing(true)}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-[#007476] bg-[#007476]/5 hover:bg-[#007476]/10 transition-colors"
+              >
+                <PencilSquareIcon className="h-3.5 w-3.5" />
+                Edit
+              </button>
+            )}
+            <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100">
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -224,6 +267,19 @@ function UserDetailModal({
                 <InfoRow label="User ID" value={<span className="font-mono text-xs">{details.user.id.slice(0, 8)}…</span>} />
               </div>
             </div>
+
+            {/* Pharmacy entity */}
+            {details.pharmacy && (
+              <div className="px-5 py-4">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Pharmacy Record</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <InfoRow label="Name" value={details.pharmacy.pharmacy_name} />
+                  <InfoRow label="Phone" value={details.pharmacy.phone} />
+                  <InfoRow label="Status" value={details.pharmacy.status} />
+                  <InfoRow label="Admin Notes" value={details.pharmacy.adminNotes} />
+                </div>
+              </div>
+            )}
 
             {/* Profile */}
             {details.user.profile ? (
@@ -297,6 +353,22 @@ function UserDetailModal({
           </div>
         )}
       </div>
+
+      {editing && details?.pharmacy && (
+        <EditPharmacyForm
+          pharmacyId={details.pharmacy.id}
+          pharmacy={details.pharmacy}
+          profile={
+            details.user.profile && 'pharmacyNameEn' in details.user.profile
+              ? (details.user.profile as PharmacyProfile)
+              : null
+          }
+          isOpen={editing}
+          loading={saving}
+          onClose={() => setEditing(false)}
+          onSubmit={handleSavePharmacy}
+        />
+      )}
     </div>
   );
 }
@@ -605,7 +677,9 @@ export default function PharmaciesPageClient() {
           userId={detailUserId}
           onClose={() => setDetailUserId(null)}
           onStatusChange={refreshCurrentTab}
+          onUpdated={refreshCurrentTab}
           onError={msg => setErrorMsg(msg)}
+          onSuccess={msg => setSuccessMsg(msg)}
         />
       )}
     </PageShell>

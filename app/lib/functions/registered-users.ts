@@ -84,3 +84,46 @@ export async function fetchRegisteredUserDetailAction(
     return { error: 'NETWORK_ERROR' };
   }
 }
+
+export async function updatePharmacyAction(
+  pharmacyId: string,
+  data: import('@/app/lib/definitions/registered-user').UpdatePharmacyRequest,
+): Promise<{ success: true; message: string; pharmacy?: any; pharmacyProfile?: any } | { success: false; message: string }> {
+  try {
+    const token = await getToken();
+    if (!token) return { success: false, message: 'No access token available' };
+
+    const res = await fetch(`${getServerApiUrl()}/admin/pharmacies/${pharmacyId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+      cache: 'no-store',
+    });
+
+    const result = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const message =
+        typeof result?.message === 'string'
+          ? result.message
+          : Array.isArray(result?.message)
+            ? result.message.join(', ')
+            : 'Failed to update pharmacy';
+      return { success: false, message };
+    }
+
+    return {
+      success: true,
+      message: result.message || 'Pharmacy updated successfully',
+      pharmacy: result.pharmacy,
+      pharmacyProfile: result.pharmacyProfile,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to update pharmacy',
+    };
+  }
+}
