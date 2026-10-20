@@ -9,6 +9,12 @@ import {
 import type { AppSetting, SnapshotRun } from '@/app/lib/definitions/home-screen';
 import { inputCls } from './shared';
 
+const groupOf = (key: string) => key.split('.')[0];
+const GROUP_LABEL: Record<string, string> = {
+  home: 'Home page (الصفحة الرئيسية)',
+  offers: 'Offers page (صفحة العروض)',
+};
+
 const RUN_STATUS_CLS: Record<SnapshotRun['status'], string> = {
   success: 'bg-emerald-50 text-emerald-700',
   failed: 'bg-red-50 text-red-700',
@@ -61,8 +67,12 @@ export default function SettingsTab({ onSuccess, onError }: { onSuccess: (m: str
           <h3 className="text-sm font-semibold text-gray-800">Home page settings</h3>
         </div>
         <div className="divide-y divide-gray-100">
-          {settings.map(s => (
-            <div key={s.key} className="flex items-center justify-between gap-4 py-2.5">
+          {settings.map((s, i) => (
+            <div key={s.key}>
+            {(i === 0 || groupOf(settings[i - 1].key) !== groupOf(s.key)) && (
+              <p className="pt-3 pb-1 text-xs font-bold uppercase tracking-wide text-[#007476]">{GROUP_LABEL[groupOf(s.key)] ?? groupOf(s.key)}</p>
+            )}
+            <div className="flex items-center justify-between gap-4 py-2.5">
               <div className="min-w-0">
                 <p className="text-sm text-gray-800">{s.description}</p>
                 <p className="font-mono text-[11px] text-gray-400">{s.key}{s.type === 'int' && ` (${s.min}–${s.max})`}</p>
@@ -84,6 +94,7 @@ export default function SettingsTab({ onSuccess, onError }: { onSuccess: (m: str
                   className={`${inputCls} w-24 text-right`}
                 />
               )}
+            </div>
             </div>
           ))}
         </div>

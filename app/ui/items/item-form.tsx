@@ -53,6 +53,7 @@ export default function ItemForm({
     drug_class_description: '',
     warehouse: '',
     needs_stamp: false,
+    is_non_drug: false,
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   
@@ -95,6 +96,8 @@ export default function ItemForm({
         drug_class_description: item.drug_class_description || '',
         warehouse: item.warehouse || '',
         needs_stamp: item.needs_stamp ?? false,
+        // Not yet in the shared Item type: non-drug items are priced per warehouse
+        is_non_drug: (item as typeof item & { is_non_drug?: boolean }).is_non_drug ?? false,
       });
       setItemNameSearch(item.item_name || '');
       // Initialize selected forms from item with volume support
@@ -135,6 +138,7 @@ export default function ItemForm({
         drug_class_description: '',
         warehouse: '',
         needs_stamp: false,
+    is_non_drug: false,
       });
       
       // Reset search values
@@ -337,6 +341,7 @@ export default function ItemForm({
         drug_class_description: formData.drug_class_description.trim() || undefined,
         warehouse: formData.warehouse || undefined,
         needs_stamp: formData.needs_stamp,
+        is_non_drug: formData.is_non_drug,
       };
 
       await onSubmit(submitData);
@@ -365,6 +370,7 @@ export default function ItemForm({
       drug_class_description: '',
       warehouse: '',
       needs_stamp: false,
+    is_non_drug: false,
     });
     setSelectedForms([]);
     setFormsSearch('');
@@ -1045,6 +1051,21 @@ export default function ItemForm({
                 />
                 <label htmlFor="needs_stamp" className="ml-2 block text-sm text-gray-700">
                   Needs Stamp
+                </label>
+              </div>
+
+              {/* Non-drug item: each warehouse sets its own price, retail and currency */}
+              <div className="flex items-center pt-6">
+                <input
+                  id="is_non_drug"
+                  type="checkbox"
+                  checked={formData.is_non_drug}
+                  onChange={(e) => setFormData(prev => ({ ...prev, is_non_drug: e.target.checked }))}
+                  disabled={loading}
+                  className="h-4 w-4 text-blue-600 focus:ring-[#007476] border-gray-300 rounded"
+                />
+                <label htmlFor="is_non_drug" className="ml-2 block text-sm text-gray-700" title="Milk, cosmetics, supplies… — each warehouse may set its own net, retail and currency; pharmacies compare them in SYP">
+                  Non-drug item (صنف غير دوائي)
                 </label>
               </div>
             </div>
