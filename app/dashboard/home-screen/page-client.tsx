@@ -1,52 +1,26 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   PlusIcon, PencilIcon, TrashIcon, PhotoIcon,
-  EyeIcon, EyeSlashIcon, ArrowsUpDownIcon,
-  TagIcon, MagnifyingGlassIcon, XMarkIcon,
-  CheckCircleIcon,
+  TagIcon, XMarkIcon,
 } from '@heroicons/react/24/outline';
 import PageShell from '@/app/ui/page-shell';
+import {
+  imgUrl, inputCls, labelCls, Modal, StatusToggle, TabBtn, ActionIcon, EmptyState,
+} from '@/app/ui/home-screen/shared';
+import SectionsTab from '@/app/ui/home-screen/sections-tab';
+import CategoriesTab from '@/app/ui/home-screen/categories-tab';
+import SettingsTab from '@/app/ui/home-screen/settings-tab';
 import { TableSkeleton } from '@/app/ui/data-table';
 import PermissionError from '@/app/ui/permission-error';
 import {
   fetchBannersAction, createBannerAction, updateBannerAction, deleteBannerAction, uploadBannerImageAction,
   fetchOffersAction, createOfferAction, updateOfferAction, deleteOfferAction, uploadOfferImageAction,
-  fetchFeaturedItemsAction, addFeaturedItemAction, updateFeaturedItemAction, deleteFeaturedItemAction,
   fetchActivePromotionsAction,
 } from '@/app/lib/functions/home-screen';
-import { fetchItemsAction } from '@/app/lib/functions/items';
-import type { Banner, CreateBannerDto, Offer, CreateOfferDto, FeaturedItemEntry, PromotionOption } from '@/app/lib/definitions/home-screen';
-import type { Item } from '@/app/lib/definitions/item';
+import type { Banner, BannerCtaType, CreateBannerDto, Offer, CreateOfferDto, PromotionOption } from '@/app/lib/definitions/home-screen';
 import { formatDateToLocal } from '@/app/lib/utils';
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const imgUrl = (path: string | null) =>
-  path ? `${process.env.NEXT_PUBLIC_API_URL}/${path.replace(/^\//, '')}` : null;
-
-const inputCls = 'w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-[#007476] focus:outline-none focus:ring-1 focus:ring-[#007476]';
-const labelCls = 'block text-xs font-medium text-gray-500 mb-1';
-
-// ── Shared Modal ──────────────────────────────────────────────────────────────
-
-function Modal({ title, onClose, children, wide }: { title: string; onClose: () => void; children: React.ReactNode; wide?: boolean }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className={`relative z-10 w-full rounded-2xl bg-white shadow-2xl ${wide ? 'max-w-2xl' : 'max-w-lg'}`}>
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
-            <XMarkIcon className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="max-h-[70vh] overflow-y-auto px-5 py-4">{children}</div>
-      </div>
-    </div>
-  );
-}
 
 // ── Promotion Select ──────────────────────────────────────────────────────────
 
@@ -88,43 +62,6 @@ function ImageCell({
   );
 }
 
-// ── Status Toggle ─────────────────────────────────────────────────────────────
-
-function StatusToggle({ active, onToggle, loading }: { active: boolean; onToggle: () => void; loading: boolean }) {
-  return (
-    <button
-      onClick={onToggle}
-      disabled={loading}
-      className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ring-1 transition-all ${
-        active ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : 'bg-gray-100 text-gray-500 ring-gray-200'
-      } disabled:opacity-50`}
-    >
-      {active ? <EyeIcon className="h-3 w-3" /> : <EyeSlashIcon className="h-3 w-3" />}
-      {active ? 'Active' : 'Inactive'}
-    </button>
-  );
-}
-
-// ── Tab Button ────────────────────────────────────────────────────────────────
-
-function TabBtn({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-        active
-          ? 'bg-white text-[#007476] shadow-sm ring-1 ring-gray-200'
-          : 'text-gray-500 hover:text-gray-700'
-      }`}
-    >
-      {label}
-      <span className={`rounded-full px-1.5 py-0.5 text-xs ${active ? 'bg-[#007476] text-white' : 'bg-gray-200 text-gray-600'}`}>
-        {count}
-      </span>
-    </button>
-  );
-}
-
 // ══ Banner Form ═══════════════════════════════════════════════════════════════
 
 function BannerForm({
@@ -142,6 +79,11 @@ function BannerForm({
   const [promotionId, setPromotionId] = useState(banner?.promotion_id ?? '');
   const [sortOrder, setSortOrder] = useState(String(banner?.sort_order ?? 0));
   const [isActive, setIsActive] = useState(banner?.is_active ?? true);
+  const [titleAr, setTitleAr] = useState(banner?.title_ar ?? '');
+  const [subtitleAr, setSubtitleAr] = useState(banner?.subtitle_ar ?? '');
+  const [ctaLabelAr, setCtaLabelAr] = useState(banner?.cta_label_ar ?? '');
+  const [ctaType, setCtaType] = useState<BannerCtaType>(banner?.cta_type ?? 'none');
+  const [ctaTarget, setCtaTarget] = useState(banner?.cta_target ?? '');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -161,6 +103,11 @@ function BannerForm({
       promotion_id: promotionId || null,
       sort_order: Number(sortOrder),
       is_active: isActive,
+      title_ar: titleAr,
+      subtitle_ar: subtitleAr,
+      cta_label_ar: ctaLabelAr,
+      cta_type: ctaType,
+      cta_target: ctaType === 'promotion' && !ctaTarget ? promotionId : ctaTarget,
     }, imageFile ?? undefined);
   };
 
@@ -198,6 +145,54 @@ function BannerForm({
           <label className={labelCls}>End Date</label>
           <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className={inputCls} />
         </div>
+      </div>
+      <div className="space-y-3 rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+        <p className="text-xs font-semibold text-gray-600">Text on the banner (mobile app)</p>
+        <div>
+          <label className={labelCls}>Title (Arabic)</label>
+          <input dir="rtl" maxLength={120} value={titleAr} onChange={e => setTitleAr(e.target.value)} placeholder="عروض خاصة للصيادلة" className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Subtitle (Arabic)</label>
+          <input dir="rtl" maxLength={200} value={subtitleAr} onChange={e => setSubtitleAr(e.target.value)} placeholder="أسعار مميزة على المنتجات الأكثر طلباً" className={inputCls} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>Button label (Arabic)</label>
+            <input dir="rtl" maxLength={40} value={ctaLabelAr} onChange={e => setCtaLabelAr(e.target.value)} placeholder="اكتشف العروض" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Button opens</label>
+            <select value={ctaType} onChange={e => setCtaType(e.target.value as BannerCtaType)} className={inputCls}>
+              <option value="none">Nothing</option>
+              <option value="promotion">A promotion</option>
+              <option value="section">A home tab</option>
+              <option value="category">A category</option>
+              <option value="search">A search</option>
+              <option value="url">A link (URL)</option>
+            </select>
+          </div>
+        </div>
+        {ctaType === 'section' && (
+          <div>
+            <label className={labelCls}>Tab</label>
+            <select value={ctaTarget} onChange={e => setCtaTarget(e.target.value)} className={inputCls}>
+              <option value="">— choose —</option>
+              <option value="top">Most ordered</option>
+              <option value="restocked">Newly available</option>
+              <option value="featured">Featured offers</option>
+            </select>
+          </div>
+        )}
+        {ctaType === 'promotion' && (
+          <p className="text-xs text-gray-400">Uses the linked promotion below.</p>
+        )}
+        {(ctaType === 'category' || ctaType === 'search' || ctaType === 'url') && (
+          <div>
+            <label className={labelCls}>{ctaType === 'category' ? 'Category ID' : ctaType === 'search' ? 'Search text' : 'URL'}</label>
+            <input value={ctaTarget} onChange={e => setCtaTarget(e.target.value)} className={inputCls} />
+          </div>
+        )}
       </div>
       <div>
         <label className={labelCls}>Linked Promotion</label>
@@ -343,129 +338,6 @@ function OfferForm({
   );
 }
 
-// ══ Item Search Modal ═════════════════════════════════════════════════════════
-
-function itemFormLabel(item: Item): string {
-  const formName = item.form || (Array.isArray(item.forms) && item.forms[0]
-    ? (typeof item.forms[0] === 'string' ? item.forms[0] : item.forms[0].id)
-    : '');
-  const volume = item.volume || undefined;
-  const qty = item.quantity != null ? String(item.quantity) : undefined;
-  return [formName, volume, qty].filter(Boolean).join(' · ');
-}
-
-function itemIngredientsLabel(item: Item): string | null {
-  const ingredients = item.active_ingredients;
-  if (!ingredients?.length) return null;
-  return ingredients
-    .slice(0, 3)
-    .map(i => [i.active_ingredient_name, i.strength].filter(Boolean).join(' '))
-    .join(', ') + (ingredients.length > 3 ? '…' : '');
-}
-
-function ItemSearchModal({ onSelect, onClose }: { onSelect: (item: Item) => void; onClose: () => void }) {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Item[]>([]);
-  const [searching, setSearching] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!query.trim()) { setResults([]); return; }
-    debounceRef.current = setTimeout(async () => {
-      setSearching(true);
-      const res = await fetchItemsAction({ search: query, limit: 15 });
-      if (!('error' in res)) setResults(res.items ?? []);
-      setSearching(false);
-    }, 300);
-  }, [query]);
-
-  return (
-    <Modal title="Search Items" onClose={onClose} wide>
-      <div className="space-y-3">
-        <div className="relative">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input
-            autoFocus
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="Search by name, barcode, or ingredient…"
-            className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm focus:border-[#007476] focus:outline-none focus:ring-1 focus:ring-[#007476]"
-          />
-        </div>
-
-        {searching && <p className="text-center text-xs text-gray-400 py-4">Searching…</p>}
-
-        {!searching && results.length === 0 && query.trim() && (
-          <p className="text-center text-xs text-gray-400 py-4">No items found</p>
-        )}
-
-        {!searching && results.length === 0 && !query.trim() && (
-          <p className="text-center text-xs text-gray-400 py-4">Type to search items</p>
-        )}
-
-        <div className="space-y-1.5 max-h-80 overflow-y-auto">
-          {results.map(item => {
-            const formLabel = itemFormLabel(item);
-            const ingredients = itemIngredientsLabel(item);
-            return (
-              <button
-                key={item.id}
-                onClick={() => onSelect(item)}
-                className="w-full flex items-start gap-3 rounded-xl border border-gray-100 px-3 py-2.5 text-left hover:bg-[#007476]/5 hover:border-[#007476]/20 transition-colors"
-              >
-                <CheckCircleIcon className="h-4 w-4 text-gray-300 flex-shrink-0 mt-0.5" />
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-gray-900 leading-snug">{item.item_name}</p>
-                    {item.drug_class && (
-                      <span className="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600">
-                        {item.drug_class}
-                      </span>
-                    )}
-                  </div>
-
-                  {item.generic_name && (
-                    <p className="text-xs text-gray-500 truncate">{item.generic_name}</p>
-                  )}
-
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-gray-500">
-                    {item.manufacturer?.name && (
-                      <span><span className="text-gray-400">Mfr:</span> {item.manufacturer.name}</span>
-                    )}
-                    {formLabel && (
-                      <span><span className="text-gray-400">Form:</span> {formLabel}</span>
-                    )}
-                    {item.barcode && (
-                      <span className="font-mono"><span className="text-gray-400">Barcode:</span> {item.barcode}</span>
-                    )}
-                    {item.itemGroup?.name && (
-                      <span><span className="text-gray-400">Group:</span> {item.itemGroup.name}</span>
-                    )}
-                    {typeof item.buying_price === 'number' && (
-                      <span>
-                        <span className="text-gray-400">Price:</span>{' '}
-                        {item.buying_price}
-                        {item.currencyEntity?.symbol ? ` ${item.currencyEntity.symbol}` : ''}
-                      </span>
-                    )}
-                  </div>
-
-                  {ingredients && (
-                    <p className="text-[11px] text-gray-400 truncate">
-                      <span className="text-gray-400">Ingredients:</span> {ingredients}
-                    </p>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
 // ══ Banners Tab ═══════════════════════════════════════════════════════════════
 
 function BannersTab({
@@ -495,6 +367,11 @@ function BannersTab({
       if (dto.promotion_id) fd.append('promotion_id', dto.promotion_id);
       fd.append('sort_order', String(dto.sort_order ?? 0));
       fd.append('is_active', String(dto.is_active ?? true));
+      if (dto.title_ar) fd.append('title_ar', dto.title_ar);
+      if (dto.subtitle_ar) fd.append('subtitle_ar', dto.subtitle_ar);
+      if (dto.cta_label_ar) fd.append('cta_label_ar', dto.cta_label_ar);
+      fd.append('cta_type', dto.cta_type ?? 'none');
+      if (dto.cta_target) fd.append('cta_target', dto.cta_target);
       if (image) fd.append('image', image);
       res = await createBannerAction(fd);
     }
@@ -545,7 +422,7 @@ function BannersTab({
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ background: 'linear-gradient(90deg, #004d4f, #007476)' }}>
-                  {['Image', 'Dates', 'Promotion', 'Carousel', 'Order', 'Status', ''].map(h => (
+                  {['Image', 'Text', 'Dates', 'Promotion', 'Carousel', 'Order', 'Status', ''].map(h => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-white/90 whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
@@ -555,6 +432,10 @@ function BannersTab({
                   <tr key={b.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <ImageCell path={b.image_path} onUpload={f => handleImageUpload(b.id, f)} uploading={uploadingId === b.id} />
+                    </td>
+                    <td className="px-4 py-3 max-w-[180px]" dir="rtl">
+                      <p className="truncate text-xs font-medium text-gray-800">{b.title_ar || '—'}</p>
+                      {b.cta_label_ar && <p className="truncate text-[11px] text-[#007476]">[{b.cta_label_ar}]</p>}
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-xs">
@@ -777,172 +658,14 @@ function OffersTab({
   );
 }
 
-// ══ Featured Items Tab ════════════════════════════════════════════════════════
-
-function FeaturedTab({
-  items, onRefresh, onSuccess, onError,
-}: {
-  items: FeaturedItemEntry[];
-  onRefresh: () => void;
-  onSuccess: (msg: string) => void;
-  onError: (msg: string) => void;
-}) {
-  const [showSearch, setShowSearch] = useState(false);
-  const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [editingSort, setEditingSort] = useState<{ id: string; value: string } | null>(null);
-
-  const handleSelect = async (item: Item) => {
-    setShowSearch(false);
-    const res = await addFeaturedItemAction(item.id);
-    if (res.success) { onSuccess(res.message); onRefresh(); }
-    else onError(res.message);
-  };
-
-  const handleToggle = async (entry: FeaturedItemEntry) => {
-    setTogglingId(entry.id);
-    const res = await updateFeaturedItemAction(entry.id, { is_active: !entry.is_active });
-    setTogglingId(null);
-    if (res.success) { onRefresh(); } else onError(res.message);
-  };
-
-  const handleSortSave = async (id: string, value: string) => {
-    setEditingSort(null);
-    const res = await updateFeaturedItemAction(id, { sort_order: Number(value) });
-    if (res.success) { onRefresh(); } else onError(res.message);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Remove this featured item?')) return;
-    const res = await deleteFeaturedItemAction(id);
-    if (res.success) { onSuccess(res.message); onRefresh(); } else onError(res.message);
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="flex justify-end">
-        <button
-          onClick={() => setShowSearch(true)}
-          className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90 transition-opacity"
-          style={{ background: 'linear-gradient(135deg, #007476, #005a5c)' }}
-        >
-          <PlusIcon className="h-4 w-4" /> Add Featured Item
-        </button>
-      </div>
-
-      {items.length === 0 ? (
-        <EmptyState icon={<ArrowsUpDownIcon className="h-8 w-8" />} label="No featured items" sub="Add items to feature them in the pharmacy app home screen" />
-      ) : (
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ background: 'linear-gradient(90deg, #004d4f, #007476)' }}>
-                  {['Item', 'Manufacturer', 'Group', 'Order', 'Status', ''].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-white/90 whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {items.map(entry => (
-                  <tr key={entry.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">{entry.item?.item_name ?? '—'}</p>
-                      {entry.item?.generic_name && <p className="text-xs text-gray-400">{entry.item.generic_name}</p>}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">{entry.item?.manufacturer?.manufacturer_name ?? '—'}</td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">{entry.item?.itemGroup?.group_name ?? '—'}</td>
-                    <td className="px-4 py-3">
-                      {editingSort?.id === entry.id ? (
-                        <input
-                          autoFocus
-                          type="number"
-                          min={0}
-                          value={editingSort.value}
-                          onChange={e => setEditingSort({ id: entry.id, value: e.target.value })}
-                          onBlur={() => handleSortSave(entry.id, editingSort.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') handleSortSave(entry.id, editingSort.value); if (e.key === 'Escape') setEditingSort(null); }}
-                          className="w-16 rounded border border-[#007476] px-2 py-1 text-xs"
-                        />
-                      ) : (
-                        <button
-                          onClick={() => setEditingSort({ id: entry.id, value: String(entry.sort_order) })}
-                          className="flex items-center gap-1 font-mono text-xs text-gray-600 hover:text-[#007476]"
-                          title="Click to edit"
-                        >
-                          {entry.sort_order}
-                          <PencilIcon className="h-2.5 w-2.5 opacity-40" />
-                        </button>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusToggle active={entry.is_active} onToggle={() => handleToggle(entry)} loading={togglingId === entry.id} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <ActionIcon icon={<TrashIcon className="h-4 w-4" />} label="Remove" onClick={() => handleDelete(entry.id)} color="red" />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {/* Mobile */}
-          <div className="sm:hidden divide-y divide-gray-100">
-            {items.map(entry => (
-              <div key={entry.id} className="p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{entry.item?.item_name ?? '—'}</p>
-                    <p className="text-xs text-gray-400">{entry.item?.manufacturer?.manufacturer_name ?? ''}</p>
-                  </div>
-                  <StatusToggle active={entry.is_active} onToggle={() => handleToggle(entry)} loading={togglingId === entry.id} />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-500">Order: {entry.sort_order}</span>
-                  <ActionIcon icon={<TrashIcon className="h-4 w-4" />} label="Remove" onClick={() => handleDelete(entry.id)} color="red" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {showSearch && <ItemSearchModal onSelect={handleSelect} onClose={() => setShowSearch(false)} />}
-    </div>
-  );
-}
-
-// ── Shared Small Components ───────────────────────────────────────────────────
-
-function ActionIcon({ icon, label, onClick, color }: { icon: React.ReactNode; label: string; onClick: () => void; color: 'blue' | 'red' }) {
-  const cls = color === 'blue'
-    ? 'text-blue-500 hover:bg-blue-50'
-    : 'text-red-500 hover:bg-red-50';
-  return (
-    <button onClick={onClick} title={label} className={`rounded-lg p-1.5 transition-colors ${cls}`}>
-      {icon}
-    </button>
-  );
-}
-
-function EmptyState({ icon, label, sub }: { icon: React.ReactNode; label: string; sub: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white py-16 text-center">
-      <div className="text-gray-300 mb-3">{icon}</div>
-      <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="text-xs text-gray-400 mt-1">{sub}</p>
-    </div>
-  );
-}
-
 // ══ Main Component ════════════════════════════════════════════════════════════
 
-type Tab = 'banners' | 'offers' | 'featured';
+type Tab = 'banners' | 'offers' | 'sections' | 'categories' | 'settings';
 
 export default function HomeScreenPageClient() {
   const [tab, setTab] = useState<Tab>('banners');
   const [banners, setBanners] = useState<Banner[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [featuredItems, setFeaturedItems] = useState<FeaturedItemEntry[]>([]);
   const [promotions, setPromotions] = useState<PromotionOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [permError, setPermError] = useState<string | null>(null);
@@ -951,18 +674,16 @@ export default function HomeScreenPageClient() {
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [bRes, oRes, fRes, pList] = await Promise.all([
+    const [bRes, oRes, pList] = await Promise.all([
       fetchBannersAction(),
       fetchOffersAction(),
-      fetchFeaturedItemsAction(),
       fetchActivePromotionsAction(),
     ]);
-    if ('error' in bRes || 'error' in oRes || 'error' in fRes) {
+    if ('error' in bRes || 'error' in oRes) {
       setPermError('UNAUTHORIZED');
     } else {
       setBanners(bRes.banners);
       setOffers(oRes.offers);
-      setFeaturedItems(fRes.featured_items);
       setPromotions(pList);
     }
     setLoading(false);
@@ -975,9 +696,6 @@ export default function HomeScreenPageClient() {
     } else if (tab === 'offers') {
       const r = await fetchOffersAction();
       if (!('error' in r)) setOffers(r.offers);
-    } else {
-      const r = await fetchFeaturedItemsAction();
-      if (!('error' in r)) setFeaturedItems(r.featured_items);
     }
   }, [tab]);
 
@@ -985,11 +703,24 @@ export default function HomeScreenPageClient() {
 
   if (permError) return <PermissionError errorType={permError as 'UNAUTHORIZED'} />;
 
+  const plainTab = (key: Tab, label: string) => (
+    <button
+      onClick={() => setTab(key)}
+      className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+        tab === key ? 'bg-white text-[#007476] shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   const tabBar = (
-    <div className="flex gap-1 rounded-xl bg-gray-100 p-1">
+    <div className="flex flex-wrap gap-1 rounded-xl bg-gray-100 p-1">
       <TabBtn label="Banners" count={banners.length} active={tab === 'banners'} onClick={() => setTab('banners')} />
       <TabBtn label="Offers" count={offers.length} active={tab === 'offers'} onClick={() => setTab('offers')} />
-      <TabBtn label="Featured Items" count={featuredItems.length} active={tab === 'featured'} onClick={() => setTab('featured')} />
+      {plainTab('sections', 'Product Tabs')}
+      {plainTab('categories', 'Categories')}
+      {plainTab('settings', 'Settings & Jobs')}
     </div>
   );
 
@@ -1024,14 +755,9 @@ export default function HomeScreenPageClient() {
               onError={setErrorMsg}
             />
           )}
-          {tab === 'featured' && (
-            <FeaturedTab
-              items={featuredItems}
-              onRefresh={loadSection}
-              onSuccess={setSuccessMsg}
-              onError={setErrorMsg}
-            />
-          )}
+          {tab === 'sections' && <SectionsTab onSuccess={setSuccessMsg} onError={setErrorMsg} />}
+          {tab === 'categories' && <CategoriesTab onSuccess={setSuccessMsg} onError={setErrorMsg} />}
+          {tab === 'settings' && <SettingsTab onSuccess={setSuccessMsg} onError={setErrorMsg} />}
         </>
       )}
     </PageShell>

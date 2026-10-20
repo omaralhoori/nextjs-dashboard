@@ -238,7 +238,9 @@ export default function CurrencyForm({
               <p className="mt-1 text-sm text-red-600">{errors.exchange_rate}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Exchange rate relative to base currency
+              Exchange rate relative to base currency: how many units of the default currency (SYP) equal 1 unit of this
+              currency (e.g. USD = 115). The pharmacy app uses it to show every price in SYP — prices of a currency
+              without a rate cannot be converted.
             </p>
           </div>
 
