@@ -15,6 +15,7 @@ const GROUP_LABEL: Record<string, string> = {
   home: 'Home page (الصفحة الرئيسية)',
   offers: 'Offers page (صفحة العروض)',
   notifications: 'Notifications (الإشعارات)',
+  orders: 'Checkout (الدفع عند إرسال الطلب)',
 };
 
 const RUN_STATUS_CLS: Record<SnapshotRun['status'], string> = {
