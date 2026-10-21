@@ -16,6 +16,7 @@ import {
   ComputerDesktopIcon,
   KeyIcon,
   BellAlertIcon,
+  ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -24,6 +25,7 @@ import clsx from 'clsx';
 const links = [
   { name: 'Home', href: '/dashboard', icon: HomeIcon },
   { name: 'Pharmacies', href: '/dashboard/pharmacies', icon: BuildingOfficeIcon },
+  { name: 'Pharmacy Requests', href: '/dashboard/pharmacy-requests', icon: ClipboardDocumentCheckIcon },
   { name: 'Warehouses', href: '/dashboard/warehouses', icon: BuildingStorefrontIcon },
   { name: 'Users', href: '/dashboard/users', icon: UserGroupIcon },
   { name: 'Item Groups', href: '/dashboard/item-groups', icon: Squares2X2Icon },

@@ -81,12 +81,24 @@ export interface RegisteredUserDetails {
     documentUploadDate: string | null;
     createdAt: string;
     updatedAt: string;
-  } | null;
+  } & PharmacyMoreFields | null;
   profileImages: ProfileImage[];
   uploadedDocuments: UploadedDocument[];
 }
 
-export interface UpdatePharmacyRequest {
+/** App «المزيد» page: license (set by the admin) and delivery address with map pin. */
+export interface PharmacyMoreFields {
+  license_number?: string | null;
+  license_expiry?: string | null;
+  address_city?: string | null;
+  address_street?: string | null;
+  address_detail?: string | null;
+  address_phone?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export interface UpdatePharmacyRequest extends PharmacyMoreFields {
   pharmacy_name?: string;
   phone?: string;
   district?: string;

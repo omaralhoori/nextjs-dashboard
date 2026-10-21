@@ -8,11 +8,13 @@ import {
 } from '@/app/lib/functions/home-sections';
 import type { AppSetting, SnapshotRun } from '@/app/lib/definitions/home-screen';
 import { inputCls } from './shared';
+import AppInfoCard from './app-info-card';
 
 const groupOf = (key: string) => key.split('.')[0];
 const GROUP_LABEL: Record<string, string> = {
   home: 'Home page (الصفحة الرئيسية)',
   offers: 'Offers page (صفحة العروض)',
+  notifications: 'Notifications (الإشعارات)',
 };
 
 const RUN_STATUS_CLS: Record<SnapshotRun['status'], string> = {
@@ -144,6 +146,7 @@ export default function SettingsTab({ onSuccess, onError }: { onSuccess: (m: str
           </table>
         </div>
       </div>
+      <AppInfoCard onSuccess={onSuccess} onError={onError} />
     </div>
   );
 }

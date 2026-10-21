@@ -10,9 +10,13 @@ import {
 } from '@/app/lib/actions';
 import type { State, City, District } from '@/app/lib/definitions/address';
 import type {
+  PharmacyMoreFields,
   PharmacyProfile,
   UpdatePharmacyRequest,
 } from '@/app/lib/definitions/registered-user';
+
+/** "" -> null, "35.1" -> 35.1 */
+const toNumber = (v: string) => (v.trim() === '' ? null : Number(v));
 
 interface EditPharmacyFormProps {
   pharmacyId: string;
@@ -22,7 +26,7 @@ interface EditPharmacyFormProps {
     district: string;
     status: string;
     adminNotes: string | null;
-  };
+  } & PharmacyMoreFields;
   profile: PharmacyProfile | null;
   isOpen: boolean;
   loading?: boolean;
@@ -52,6 +56,14 @@ export default function EditPharmacyForm({
     adminNotes: '',
     status: 'Active' as 'Pending' | 'Active' | 'Disabled',
     district: '',
+    license_number: '',
+    license_expiry: '',
+    address_city: '',
+    address_street: '',
+    address_detail: '',
+    address_phone: '',
+    latitude: '',
+    longitude: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -78,6 +90,14 @@ export default function EditPharmacyForm({
       adminNotes: pharmacy.adminNotes || '',
       status: (pharmacy.status as 'Pending' | 'Active' | 'Disabled') || 'Active',
       district: pharmacy.district || '',
+      license_number: pharmacy.license_number || '',
+      license_expiry: pharmacy.license_expiry?.slice(0, 10) || '',
+      address_city: pharmacy.address_city || '',
+      address_street: pharmacy.address_street || '',
+      address_detail: pharmacy.address_detail || '',
+      address_phone: pharmacy.address_phone || '',
+      latitude: pharmacy.latitude != null ? String(pharmacy.latitude) : '',
+      longitude: pharmacy.longitude != null ? String(pharmacy.longitude) : '',
     });
     setErrors({});
 
@@ -139,6 +159,11 @@ export default function EditPharmacyForm({
     if (!formData.pharmacyNameEn.trim()) next.pharmacyNameEn = 'English name is required';
     if (!formData.phone.trim()) next.phone = 'Phone is required';
     if (!formData.district) next.district = 'District is required';
+    const lat = toNumber(formData.latitude);
+    const lng = toNumber(formData.longitude);
+    if ((lat == null) !== (lng == null)) next.latitude = 'Enter both latitude and longitude';
+    if (lat != null && !(lat >= -90 && lat <= 90)) next.latitude = 'Invalid latitude';
+    if (lng != null && !(lng >= -180 && lng <= 180)) next.longitude = 'Invalid longitude';
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -161,6 +186,14 @@ export default function EditPharmacyForm({
       detailedAddress: formData.detailedAddress.trim() || undefined,
       adminNotes: formData.adminNotes.trim() || null,
       status: formData.status,
+      license_number: formData.license_number.trim() || null,
+      license_expiry: formData.license_expiry || null,
+      address_city: formData.address_city.trim() || null,
+      address_street: formData.address_street.trim() || null,
+      address_detail: formData.address_detail.trim() || null,
+      address_phone: formData.address_phone.trim() || null,
+      latitude: toNumber(formData.latitude),
+      longitude: toNumber(formData.longitude),
     });
   };
 
@@ -289,6 +322,42 @@ export default function EditPharmacyForm({
               <Field label="Area" value={formData.area} onChange={v => setField('area', v)} />
               <Field label="Detailed Address" value={formData.detailedAddress} onChange={v => setField('detailedAddress', v)} />
             </div>
+          </div>
+
+          <div className="border-t border-gray-100 pt-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">App profile («المزيد»)</p>
+            <p className="text-xs text-gray-400 mb-3">
+              License shown on the pharmacy card (expiring within 60 days is highlighted). The delivery address and map pin are
+              sent with every order; the pharmacy changes them by request (Pharmacy Requests).
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="License number" value={formData.license_number} onChange={v => setField('license_number', v)} />
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">License expiry</label>
+                <input
+                  type="date"
+                  value={formData.license_expiry}
+                  onChange={e => setField('license_expiry', e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#007476] focus:outline-none focus:ring-1 focus:ring-[#007476]"
+                />
+              </div>
+              <Field label="Delivery city" value={formData.address_city} onChange={v => setField('address_city', v)} dir="rtl" />
+              <Field label="Delivery street / area" value={formData.address_street} onChange={v => setField('address_street', v)} dir="rtl" />
+              <Field label="Details for the driver" value={formData.address_detail} onChange={v => setField('address_detail', v)} dir="rtl" />
+              <Field label="Receiving phone" value={formData.address_phone} onChange={v => setField('address_phone', v)} />
+              <Field label="Latitude" value={formData.latitude} onChange={v => setField('latitude', v)} error={errors.latitude} />
+              <Field label="Longitude" value={formData.longitude} onChange={v => setField('longitude', v)} error={errors.longitude} />
+            </div>
+            {toNumber(formData.latitude) != null && toNumber(formData.longitude) != null && (
+              <a
+                href={`https://www.google.com/maps?q=${formData.latitude},${formData.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-xs font-semibold text-[#007476] underline"
+              >
+                Open pin in Google Maps
+              </a>
+            )}
           </div>
 
           <div>
