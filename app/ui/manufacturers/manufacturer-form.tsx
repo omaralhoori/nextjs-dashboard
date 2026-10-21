@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Button } from '@/app/ui/button';
 import { XMarkIcon, PhotoIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
 import type { Manufacturer, CreateManufacturerRequest, UpdateManufacturerRequest } from '@/app/lib/definitions/manufacturer';
+import { fetchHomeCategoriesAction } from '@/app/lib/functions/home-sections';
 
 interface ManufacturerFormProps {
   manufacturer?: Manufacturer | null;
@@ -30,6 +31,9 @@ export default function ManufacturerForm({
     description: '',
     phone: '',
   });
+  // Suppliers page category: '' = automatic (dominant category of the company's items)
+  const [categoryId, setCategoryId] = useState('');
+  const [categories, setCategories] = useState<Array<{ id: string; name_ar: string }>>([]);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -49,13 +53,21 @@ export default function ManufacturerForm({
         phone: manufacturer.phone || '',
       });
       setImagePreview(manufacturer.imageUrl || null);
+      setCategoryId(manufacturer.home_category_id ?? '');
     } else {
       setFormData({ name: '', code: '', country: '', email: '', website: '', description: '', phone: '' });
       setImagePreview(null);
+      setCategoryId('');
     }
     setImageFile(null);
     setErrors({});
   }, [manufacturer]);
+
+  useEffect(() => {
+    fetchHomeCategoriesAction().then(res => {
+      if (!('error' in res)) setCategories(res.categories.map(c => ({ id: c.id, name_ar: c.name_ar })));
+    });
+  }, []);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -96,6 +108,7 @@ export default function ManufacturerForm({
       website: formData.website.trim() || undefined,
       description: formData.description.trim() || undefined,
       phone: formData.phone.trim() || undefined,
+      home_category_id: categoryId || null,
     };
     // Parent closes the form only after a successful save.
     await onSubmit(submitData, imageFile || undefined);
@@ -225,6 +238,25 @@ export default function ManufacturerForm({
               disabled={loading}
             />
             {errors.country && <p className="mt-1 text-sm text-red-600">{errors.country}</p>}
+          </div>
+
+          {/* Suppliers page category */}
+          <div>
+            <label htmlFor="home_category" className="block text-sm font-medium text-gray-700 mb-1">Category (suppliers page)</label>
+            <select
+              id="home_category"
+              value={categoryId}
+              onChange={e => setCategoryId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476]"
+              disabled={loading}
+              dir="rtl"
+            >
+              <option value="">Automatic (from the company&apos;s items)</option>
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.name_ar}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">Chip of the factories tab in the app (e.g. أدوية مستوردة). Automatic = the category most of its items belong to.</p>
           </div>
 
           {/* Email Field */}

@@ -9,6 +9,8 @@ export interface Manufacturer {
   website?: string | null;
   active: boolean;
   imageUrl?: string | null;
+  /** Suppliers page category (home category); null = automatic */
+  home_category_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +41,7 @@ export interface CreateManufacturerRequest {
   description?: string;
   phone?: string;
   imageUrl?: string;
+  home_category_id?: string | null;
 }
 
 export interface UpdateManufacturerRequest {
@@ -51,4 +54,5 @@ export interface UpdateManufacturerRequest {
   phone?: string;
   active?: boolean;
   imageUrl?: string;
+  home_category_id?: string | null;
 }

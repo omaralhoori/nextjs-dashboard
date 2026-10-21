@@ -13,7 +13,20 @@ export interface Warehouse {
   imageUrl?: string | null;
   createdAt: string;
   updatedAt: string;
+  // Suppliers page profile
+  warehouse_type?: WarehouseType;
+  agent_of?: Array<{ id: string; name: string; imageUrl?: string | null }>;
+  work_days?: string | null;
+  work_hours?: string | null;
+  eta_label?: string | null;
+  min_order_amount?: number | null;
+  usd_rate?: number | null;
+  default_order_mode?: OrderMode;
 }
+
+export type WarehouseType = 'distributor' | 'agent';
+/** split = two orders (SYP and $) · syp = one order in SYP */
+export type OrderMode = 'split' | 'syp';
 
 export interface WarehousePagination {
   total: number;
@@ -93,4 +106,12 @@ export interface UpdateWarehouseRequest {
   adminNotes?: string | null;
   imageUrl?: string | null;
   status?: 'enabled' | 'disabled';
+  warehouse_type?: WarehouseType;
+  agent_manufacturer_ids?: string[];
+  work_days?: string | null;
+  work_hours?: string | null;
+  eta_label?: string | null;
+  min_order_amount?: number | null;
+  usd_rate?: number | null;
+  default_order_mode?: OrderMode;
 }

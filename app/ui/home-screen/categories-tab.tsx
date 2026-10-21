@@ -32,6 +32,7 @@ function CategoryForm({
   const [groupIds, setGroupIds] = useState<string[]>(category?.filter?.item_group_ids ?? []);
   const [drugClass, setDrugClass] = useState(category?.filter?.drug_class ?? '');
   const [isActive, setIsActive] = useState(category?.is_active ?? true);
+  const [isDrug, setIsDrug] = useState(category?.supplier_group === 'drugs');
 
   const toggleGroup = (id: string) =>
     setGroupIds(ids => (ids.includes(id) ? ids.filter(x => x !== id) : [...ids, id]));
@@ -46,6 +47,7 @@ function CategoryForm({
           name_en: nameEn || null,
           icon_key: iconKey,
           color,
+          supplier_group: isDrug ? 'drugs' : null,
           filter: {
             item_group_ids: groupIds,
             ...(drugClass && { drug_class: drugClass as 'OTC' | 'RX' | 'Controlled' }),
@@ -107,6 +109,10 @@ function CategoryForm({
           <option value="Controlled">Controlled</option>
         </select>
       </div>
+      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+        <input type="checkbox" checked={isDrug} onChange={e => setIsDrug(e.target.checked)} className="rounded" />
+        Medicines category (grouped under «أدوية» on the suppliers page)
+      </label>
       <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
         <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="rounded" />
         Active (visible in the app)
@@ -199,7 +205,10 @@ export default function CategoriesTab({ onSuccess, onError }: { onSuccess: (m: s
                   </td>
                   <td className="px-4 py-2">
                     <p className="font-medium text-gray-900" dir="rtl">{c.name_ar}</p>
-                    <p className="text-xs text-gray-400">{c.name_en}</p>
+                    <p className="text-xs text-gray-400">
+                      {c.name_en}
+                      {c.supplier_group === 'drugs' && <span className="ml-1 rounded bg-teal-50 px-1 text-[10px] text-teal-700">أدوية</span>}
+                    </p>
                   </td>
                   <td className="px-4 py-2 font-mono text-xs text-gray-600">
                     <span className="inline-flex items-center gap-2">

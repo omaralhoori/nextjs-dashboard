@@ -11,6 +11,7 @@ import type {
   CreateWarehouseManagerResponse,
   WarehouseDetailsResponse,
   Warehouse,
+  UpdateWarehouseRequest,
 } from '@/app/lib/definitions/warehouse';
 
 export async function createWarehouseAction(warehouseData: {
@@ -30,23 +31,19 @@ export async function createWarehouseAction(warehouseData: {
       return { success: false, message: 'API URL not configured' };
     }
 
-    let body: BodyInit;
-    const headers: Record<string, string> = { Authorization: `Bearer ${session.user.accessToken}` };
-
+    // The create endpoint takes JSON only: upload the image first (as on edit) and send its URL
+    const payload: Record<string, unknown> = { ...warehouseData };
     if (imageFile) {
-      const formData = new FormData();
-      Object.entries(warehouseData).forEach(([k, v]) => { if (v !== undefined) formData.append(k, String(v)); });
-      formData.append('image', imageFile);
-      body = formData;
-    } else {
-      headers['Content-Type'] = 'application/json';
-      body = JSON.stringify(warehouseData);
+      payload.imageUrl = await uploadWarehouseImage(imageFile, session.user.accessToken, apiUrl);
     }
 
     const response = await fetch(`${apiUrl}/admin/warehouses/create`, {
       method: 'POST',
-      headers,
-      body,
+      headers: {
+        Authorization: `Bearer ${session.user.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -262,15 +259,7 @@ async function uploadWarehouseImage(file: File, token: string, apiUrl: string): 
 
 export async function updateWarehouseAction(
   warehouseId: string,
-  warehouseData: {
-    warehouse_name?: string;
-    district?: string;
-    phone?: string;
-    location?: string;
-    adminNotes?: string | null;
-    imageUrl?: string | null;
-    status?: 'enabled' | 'disabled';
-  },
+  warehouseData: UpdateWarehouseRequest,
   imageFile?: File,
 ): Promise<{ success: true; message: string; warehouse?: Warehouse } | { success: false; message: string }> {
   try {

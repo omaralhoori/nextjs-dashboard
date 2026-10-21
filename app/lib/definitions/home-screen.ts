@@ -162,6 +162,8 @@ export interface HomeCategory {
   color: string | null;
   image_path: string | null;
   filter: HomeCategoryFilter;
+  /** "drugs" = grouped under «أدوية» on the suppliers factories tab */
+  supplier_group?: string | null;
   sort_order: number;
   is_active: boolean;
   created_at: string;
@@ -173,6 +175,7 @@ export interface CreateHomeCategoryDto {
   name_en?: string | null;
   icon_key?: string;
   color?: string | null;
+  supplier_group?: string | null;
   filter?: HomeCategoryFilter;
   sort_order?: number;
   is_active?: boolean;
