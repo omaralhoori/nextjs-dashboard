@@ -158,6 +158,8 @@ export interface HomeCategory {
   name_ar: string;
   name_en: string | null;
   icon_key: string;
+  /** Category colour (#RRGGBB) — search card stripe and badge */
+  color: string | null;
   image_path: string | null;
   filter: HomeCategoryFilter;
   sort_order: number;
@@ -170,6 +172,7 @@ export interface CreateHomeCategoryDto {
   name_ar: string;
   name_en?: string | null;
   icon_key?: string;
+  color?: string | null;
   filter?: HomeCategoryFilter;
   sort_order?: number;
   is_active?: boolean;

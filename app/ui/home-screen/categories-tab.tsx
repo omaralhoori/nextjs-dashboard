@@ -28,6 +28,7 @@ function CategoryForm({
   const [nameAr, setNameAr] = useState(category?.name_ar ?? '');
   const [nameEn, setNameEn] = useState(category?.name_en ?? '');
   const [iconKey, setIconKey] = useState(category?.icon_key ?? 'pill');
+  const [color, setColor] = useState(category?.color ?? '#007A78');
   const [groupIds, setGroupIds] = useState<string[]>(category?.filter?.item_group_ids ?? []);
   const [drugClass, setDrugClass] = useState(category?.filter?.drug_class ?? '');
   const [isActive, setIsActive] = useState(category?.is_active ?? true);
@@ -44,6 +45,7 @@ function CategoryForm({
           name_ar: nameAr,
           name_en: nameEn || null,
           icon_key: iconKey,
+          color,
           filter: {
             item_group_ids: groupIds,
             ...(drugClass && { drug_class: drugClass as 'OTC' | 'RX' | 'Controlled' }),
@@ -63,11 +65,20 @@ function CategoryForm({
           <input value={nameEn} onChange={e => setNameEn(e.target.value)} className={inputCls} placeholder="Local medicines" />
         </div>
       </div>
-      <div>
-        <label className={labelCls}>Icon</label>
-        <select value={iconKey} onChange={e => setIconKey(e.target.value)} className={inputCls}>
-          {ICON_KEYS.map(k => <option key={k} value={k}>{k}</option>)}
-        </select>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={labelCls}>Icon</label>
+          <select value={iconKey} onChange={e => setIconKey(e.target.value)} className={inputCls}>
+            {ICON_KEYS.map(k => <option key={k} value={k}>{k}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={labelCls}>Colour (search card stripe)</label>
+          <div className="flex items-center gap-2">
+            <input type="color" value={color} onChange={e => setColor(e.target.value.toUpperCase())} className="h-9 w-12 cursor-pointer rounded border border-gray-200" />
+            <input value={color} onChange={e => setColor(e.target.value)} className={inputCls} pattern="#[0-9A-Fa-f]{6}" />
+          </div>
+        </div>
       </div>
       <div>
         <label className={labelCls}>Item groups in this category</label>
@@ -190,7 +201,12 @@ export default function CategoriesTab({ onSuccess, onError }: { onSuccess: (m: s
                     <p className="font-medium text-gray-900" dir="rtl">{c.name_ar}</p>
                     <p className="text-xs text-gray-400">{c.name_en}</p>
                   </td>
-                  <td className="px-4 py-2 font-mono text-xs text-gray-600">{c.icon_key}</td>
+                  <td className="px-4 py-2 font-mono text-xs text-gray-600">
+                    <span className="inline-flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full ring-1 ring-gray-200" style={{ background: c.color ?? '#E5E7EB' }} />
+                      {c.icon_key}
+                    </span>
+                  </td>
                   <td className="px-4 py-2 text-xs text-gray-600" dir="rtl">
                     {c.filter?.item_group_ids?.length ? c.filter.item_group_ids.map(groupName).join('، ') : <span className="text-gray-400">All items</span>}
                     {c.filter?.drug_class && <span className="ml-1 text-gray-400">· {c.filter.drug_class}</span>}
