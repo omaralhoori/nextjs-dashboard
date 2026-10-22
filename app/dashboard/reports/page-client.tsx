@@ -16,7 +16,7 @@ import type { WarehouseSalesReport, WarehouseSalesManufacturer } from '@/app/lib
 import { fetchWarehousesAction } from '@/app/lib/functions/warehouse';
 import type { Warehouse } from '@/app/lib/definitions/warehouse';
 
-const ALL_STATUSES = ['Pending', 'Processing', 'Delivery', 'Completed', 'Rejected', 'Undeliverable'];
+const ALL_STATUSES = ['Pending', 'Processing', 'Delivery', 'Completed', 'Rejected', 'Undeliverable', 'Cancelled'];
 
 const STATUS_COLORS: Record<string, string> = {
   Pending: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
@@ -25,6 +25,7 @@ const STATUS_COLORS: Record<string, string> = {
   Completed: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
   Rejected: 'bg-red-50 text-red-700 ring-1 ring-red-200',
   Undeliverable: 'bg-gray-100 text-gray-600 ring-1 ring-gray-200',
+  Cancelled: 'bg-gray-50 text-gray-500 ring-1 ring-gray-200 line-through',
 };
 
 function formatCurrency(amount: number, currency: string) {
