@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   PlusIcon, 
   TrashIcon, 
@@ -27,12 +27,17 @@ interface MedicineIngredientsManagerProps {
   itemName?: string;
 }
 
+const SEARCH_LIMIT = 50;
+const SEARCH_DEBOUNCE_MS = 300;
+
 export default function MedicineIngredientsManager({ 
   itemId, 
   itemName 
 }: MedicineIngredientsManagerProps) {
   const [ingredients, setIngredients] = useState<MedicineIngredient[]>([]);
   const [availableIngredients, setAvailableIngredients] = useState<ActiveIngredient[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchTotal, setSearchTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -44,6 +49,7 @@ export default function MedicineIngredientsManager({
   const [ingredientSearch, setIngredientSearch] = useState('');
   const [showIngredientDropdown, setShowIngredientDropdown] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const searchRequestId = useRef(0);
   
   // Edit ingredient state
   const [editingIngredient, setEditingIngredient] = useState<MedicineIngredient | null>(null);
@@ -70,31 +76,56 @@ export default function MedicineIngredientsManager({
   useEffect(() => {
     if (itemId) {
       fetchIngredients();
-      fetchAvailableIngredients();
     }
   }, [itemId, fetchIngredients]);
 
-  const fetchAvailableIngredients = async () => {
+  const searchAvailableIngredients = useCallback(async (query: string) => {
+    const requestId = ++searchRequestId.current;
+    setSearchLoading(true);
     try {
-      const result = await fetchActiveIngredientsAction(1, 500);
-      
+      const result = await fetchActiveIngredientsAction(
+        1,
+        SEARCH_LIMIT,
+        query.trim() || undefined,
+      );
+
+      if (requestId !== searchRequestId.current) return;
+
       if ('error' in result) {
-        console.error('Error fetching available ingredients:', result.error);
+        console.error('Error searching available ingredients:', result.error);
+        setAvailableIngredients([]);
+        setSearchTotal(0);
       } else {
         setAvailableIngredients(result.activeIngredients || []);
+        setSearchTotal(result.pagination?.total ?? result.total ?? 0);
       }
     } catch (err) {
-      console.error('Error fetching available ingredients:', err);
+      if (requestId !== searchRequestId.current) return;
+      console.error('Error searching available ingredients:', err);
+      setAvailableIngredients([]);
+      setSearchTotal(0);
+    } finally {
+      if (requestId === searchRequestId.current) {
+        setSearchLoading(false);
+      }
     }
-  };
+  }, []);
 
-  const filteredIngredients = availableIngredients.filter(ingredient => {
-    const q = ingredientSearch.toLowerCase();
-    if (!q) return true;
-    const nameMatch = ingredient.active_ingredient_name?.toLowerCase().includes(q);
-    const arabicMatch = ingredient.arabic_name?.toLowerCase().includes(q);
-    return Boolean(nameMatch || arabicMatch);
-  });
+  // Server-side search while typing (covers all ~1300+ ingredients, not just first page)
+  useEffect(() => {
+    if (!isAddFormOpen) return;
+
+    const timer = setTimeout(() => {
+      void searchAvailableIngredients(ingredientSearch);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [ingredientSearch, isAddFormOpen, searchAvailableIngredients]);
+
+  const alreadyLinkedIds = new Set(ingredients.map((i) => i.ingredient_id));
+  const filteredIngredients = availableIngredients.filter(
+    (ingredient) => !alreadyLinkedIds.has(ingredient.id),
+  );
 
   const handleAddIngredient = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,6 +251,7 @@ export default function MedicineIngredientsManager({
     setSelectedIngredientId('');
     setStrength('');
     setIngredientSearch('');
+    setAvailableIngredients([]);
     setError(null);
   };
 
@@ -352,39 +384,65 @@ export default function MedicineIngredientsManager({
                       value={ingredientSearch}
                       onChange={(e) => {
                         setIngredientSearch(e.target.value);
+                        setSelectedIngredientId('');
                         setShowIngredientDropdown(true);
-                        if (e.target.value === '') {
-                          setSelectedIngredientId('');
-                        }
                       }}
                       onFocus={() => setShowIngredientDropdown(true)}
                       className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007476] focus:border-blue-500"
-                      placeholder="Search ingredients..."
+                      placeholder="Type to search all ingredients..."
                       disabled={formLoading}
+                      autoComplete="off"
                     />
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                      <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+                      {searchLoading ? (
+                        <span className="block h-4 w-4 rounded-full border-2 border-gray-300 border-t-[#007476] animate-spin" />
+                      ) : (
+                        <MagnifyingGlassIcon className="h-4 w-4 text-gray-400" />
+                      )}
                     </div>
                   </div>
                   
                   {showIngredientDropdown && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                      {filteredIngredients.length > 0 ? (
-                        filteredIngredients.map((ingredient) => (
-                          <div
-                            key={ingredient.id}
-                            onClick={() => handleIngredientSelect(ingredient)}
-                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                          >
-                            {ingredient.active_ingredient_name}
-                          </div>
-                        ))
+                      {searchLoading && filteredIngredients.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-gray-500">Searching…</div>
+                      ) : filteredIngredients.length > 0 ? (
+                        <>
+                          {filteredIngredients.map((ingredient) => (
+                            <div
+                              key={ingredient.id}
+                              onClick={() => handleIngredientSelect(ingredient)}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                            >
+                              <div className="font-medium text-gray-900">
+                                {ingredient.active_ingredient_name}
+                              </div>
+                              {ingredient.arabic_name ? (
+                                <div className="text-xs text-gray-500">{ingredient.arabic_name}</div>
+                              ) : null}
+                            </div>
+                          ))}
+                          {searchTotal > filteredIngredients.length && (
+                            <div className="px-3 py-2 text-xs text-gray-400 border-t bg-gray-50">
+                              Showing {filteredIngredients.length} of {searchTotal} — type more to narrow
+                            </div>
+                          )}
+                        </>
                       ) : (
-                        <div className="px-3 py-2 text-sm text-gray-500">No ingredients found</div>
+                        <div className="px-3 py-2 text-sm text-gray-500">
+                          {ingredientSearch.trim()
+                            ? 'No ingredients found'
+                            : 'Start typing to search ingredients'}
+                        </div>
                       )}
                     </div>
                   )}
                 </div>
+                {selectedIngredientId ? (
+                  <p className="mt-1 text-xs text-emerald-600">Ingredient selected</p>
+                ) : (
+                  <p className="mt-1 text-xs text-gray-400">Select a result from the list</p>
+                )}
               </div>
 
               {/* Strength */}
@@ -416,7 +474,7 @@ export default function MedicineIngredientsManager({
                 <button
                   type="submit"
                   className="px-4 py-2 text-sm font-medium text-white bg-[#007476] rounded-md hover:bg-[#005a5c] disabled:opacity-50"
-                  disabled={formLoading}
+                  disabled={formLoading || !selectedIngredientId}
                 >
                   {formLoading ? 'Adding...' : 'Add Ingredient'}
                 </button>

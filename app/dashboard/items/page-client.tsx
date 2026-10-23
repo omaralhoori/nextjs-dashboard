@@ -192,6 +192,15 @@ export default function ItemsPageClient() {
     return false;
   };
 
+  const handleImageUpdated = (id: string, imageUrl: string, imageFileId: string) => {
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === id ? { ...it, image_url: imageUrl, image_file_id: imageFileId } : it,
+      ),
+    );
+    setSuccessMsg('Image updated');
+  };
+
   if (permError) return <PermissionError errorType={permError as 'PERMISSION_DENIED' | 'UNAUTHORIZED' | 'NETWORK_ERROR'} />;
 
   const manufacturerOptions = [
@@ -238,6 +247,7 @@ export default function ItemsPageClient() {
           onEditFull={openEdit}
           onDelete={handleDelete}
           onSaveCell={handleSaveCell}
+          onImageUpdated={handleImageUpdated}
           onLoadMore={loadMore}
           hasMore={hasMore}
           loadingMore={loadingMore}

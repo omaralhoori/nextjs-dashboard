@@ -18,6 +18,7 @@ import {
   KeyIcon,
   BellAlertIcon,
   ClipboardDocumentCheckIcon,
+  MoonIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -39,6 +40,8 @@ const links = [
   { name: 'Reports', href: '/dashboard/reports', icon: ChartBarIcon },
   { name: 'Home Screen', href: '/dashboard/home-screen', icon: ComputerDesktopIcon },
   { name: 'Notifications', href: '/dashboard/notifications', icon: BellAlertIcon },
+  // Managed on the public site's own admin page (same admin account)
+  { name: 'Duty Pharmacies', href: 'https://pharmaservapp.com/pharmacy#admin', icon: MoonIcon },
   { name: 'Password Resets', href: '/dashboard/password-reset', icon: KeyIcon },
   { name: 'Profile', href: '/dashboard/profile', icon: UserCircleIcon },
 ];
@@ -61,6 +64,7 @@ export default function NavLinks({ collapsed = false, onLinkClick }: NavLinksPro
           <Link
             key={link.name}
             href={link.href}
+            {...(link.href.startsWith('http') ? { target: '_blank', rel: 'noopener' } : {})}
             onClick={onLinkClick}
             title={collapsed ? link.name : undefined}
             className={clsx(

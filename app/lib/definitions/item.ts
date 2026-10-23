@@ -73,6 +73,9 @@ export interface Item {
     strength?: string;
   }>;
   exists_in_warehouse?: boolean;
+  /** Primary item image path from item_files (e.g. /uploads/item-images/...) */
+  image_url?: string | null;
+  image_file_id?: string | null;
 }
 
 export interface ItemsResponse {

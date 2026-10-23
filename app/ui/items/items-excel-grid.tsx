@@ -6,8 +6,10 @@ import {
   TrashIcon,
   CheckIcon,
   ExclamationCircleIcon,
+  PhotoIcon,
 } from '@heroicons/react/24/outline';
 import type { Item, UpdateItemRequest } from '@/app/lib/definitions/item';
+import { uploadItemImageAction } from '@/app/lib/actions';
 
 // ── Cell status keys ──────────────────────────────────────────────────────────
 type CellStatus = 'saving' | 'saved' | 'error' | undefined;
@@ -18,9 +20,34 @@ interface ItemsExcelGridProps {
   onDelete: (id: string) => void;
   /** Persist a single-field change. Returns true on success. */
   onSaveCell: (id: string, patch: UpdateItemRequest) => Promise<boolean>;
+  /** After inline image upload — update local row image fields. */
+  onImageUpdated?: (id: string, imageUrl: string, imageFileId: string) => void;
   onLoadMore: () => void;
   hasMore: boolean;
   loadingMore: boolean;
+}
+
+function resolveImageUrl(path?: string | null): string | null {
+  if (!path) return null;
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const base = process.env.NEXT_PUBLIC_API_URL || '';
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`;
+}
+
+function formatItemForms(item: Item): string {
+  if (Array.isArray(item.forms) && item.forms.length > 0) {
+    const labels = item.forms
+      .map((f: any) => {
+        if (typeof f === 'string') return f;
+        const id = f?.form?.id ?? f?.form_id ?? f?.id ?? '';
+        const volume = f?.volume;
+        if (!id) return '';
+        return volume ? `${id} (${volume})` : id;
+      })
+      .filter(Boolean);
+    if (labels.length > 0) return labels.join(', ');
+  }
+  return item.form?.trim() || '—';
 }
 
 const DRUG_CLASS_OPTIONS = ['OTC', 'RX', 'Controlled'] as const;
@@ -114,12 +141,96 @@ function CellIndicator({ status }: { status: CellStatus }) {
   );
 }
 
+// ── Inline image cell (click to replace) ──────────────────────────────────────
+function ImageCell({
+  item,
+  onUpdated,
+}: {
+  item: Item;
+  onUpdated?: (id: string, imageUrl: string, imageFileId: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState(false);
+  const src = resolveImageUrl(item.image_url);
+
+  const handleFile = async (file: File) => {
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowed.includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setError(true);
+      setTimeout(() => setError(false), 2000);
+      return;
+    }
+    setUploading(true);
+    setError(false);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const result = await uploadItemImageAction(item.id, formData);
+      if (result.success && result.data?.filePath) {
+        onUpdated?.(item.id, result.data.filePath, result.data.fileId);
+      } else {
+        setError(true);
+        setTimeout(() => setError(false), 2500);
+      }
+    } catch {
+      setError(true);
+      setTimeout(() => setError(false), 2500);
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center gap-0.5 py-1">
+      <button
+        type="button"
+        title={src ? 'Change image' : 'Upload image'}
+        disabled={uploading}
+        onClick={() => inputRef.current?.click()}
+        className={[
+          'relative h-12 w-12 overflow-hidden rounded-md border bg-gray-50',
+          'hover:border-[#007476] hover:ring-1 hover:ring-[#007476]/40 transition-all',
+          error ? 'border-red-400' : 'border-gray-200',
+          uploading ? 'opacity-60 cursor-wait' : 'cursor-pointer',
+        ].join(' ')}
+      >
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="flex h-full w-full items-center justify-center text-gray-300">
+            <PhotoIcon className="h-6 w-6" />
+          </span>
+        )}
+        {uploading && (
+          <span className="absolute inset-0 flex items-center justify-center bg-white/70">
+            <span className="block h-4 w-4 rounded-full border-2 border-gray-300 border-t-[#007476] animate-spin" />
+          </span>
+        )}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void handleFile(f);
+        }}
+      />
+    </div>
+  );
+}
+
 // ── Grid ──────────────────────────────────────────────────────────────────────
 export default function ItemsExcelGrid({
   items,
   onEditFull,
   onDelete,
   onSaveCell,
+  onImageUpdated,
   onLoadMore,
   hasMore,
   loadingMore,
@@ -135,7 +246,7 @@ export default function ItemsExcelGrid({
     const key = `${item.id}:${field}`;
     const patch: UpdateItemRequest = {};
 
-    if (field === 'buying_price' || field === 'selling_price') {
+    if (field === 'buying_price' || field === 'selling_price' || field === 'quantity') {
       const n = Number(raw);
       if (raw.trim() === '' || Number.isNaN(n) || n < 0) {
         setStatus(key, 'error');
@@ -191,13 +302,16 @@ export default function ItemsExcelGrid({
   return (
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
       <div ref={scrollRef} onScroll={handleScroll} className="max-h-[68vh] overflow-auto">
-        <table className="min-w-[1180px] w-full border-collapse">
+        <table className="min-w-[1380px] w-full border-collapse">
           <thead className="sticky top-0 z-10">
             <tr style={{ background: 'linear-gradient(90deg, #004d4f, #007476)' }}>
               <th className={`${HEAD} w-12 text-center`}>#</th>
+              <th className={`${HEAD} w-16 text-center`}>Image</th>
               <th className={`${HEAD} min-w-[200px]`}>Item Name</th>
               <th className={`${HEAD} min-w-[160px]`}>Generic Name</th>
               <th className={`${HEAD} min-w-[140px]`}>Barcode</th>
+              <th className={`${HEAD} min-w-[120px]`}>Form</th>
+              <th className={`${HEAD} w-24 text-right`}>Pack</th>
               <th className={`${HEAD} min-w-[150px]`}>Manufacturer</th>
               <th className={`${HEAD} min-w-[130px]`}>Group</th>
               <th className={`${HEAD} w-32`}>Drug Class</th>
@@ -210,12 +324,15 @@ export default function ItemsExcelGrid({
           <tbody className="divide-y divide-gray-100">
             {items.length === 0 ? (
               <tr>
-                <td colSpan={11} className="py-12 text-center text-sm text-gray-400">No items found</td>
+                <td colSpan={14} className="py-12 text-center text-sm text-gray-400">No items found</td>
               </tr>
             ) : (
               items.map((row, idx) => (
                 <tr key={row.id} className="hover:bg-[#007476]/[0.03] transition-colors">
                   <td className="border-r border-gray-100 px-2 py-1.5 text-center text-xs text-gray-400 tabular-nums">{idx + 1}</td>
+                  <td className="border-r border-gray-100 px-1">
+                    <ImageCell item={row} onUpdated={onImageUpdated} />
+                  </td>
                   <td className={CELL}>
                     <EditableCell value={row.item_name ?? ''} status={st(row.id, 'item_name')} onCommit={(v) => commitField(row, 'item_name', v)} />
                   </td>
@@ -224,6 +341,12 @@ export default function ItemsExcelGrid({
                   </td>
                   <td className={CELL}>
                     <EditableCell value={row.barcode ?? ''} status={st(row.id, 'barcode')} onCommit={(v) => commitField(row, 'barcode', v)} />
+                  </td>
+                  <td className="border-r border-gray-100 px-3 py-1.5 text-sm text-gray-700 whitespace-nowrap max-w-[180px] truncate" title={formatItemForms(row)}>
+                    {formatItemForms(row)}
+                  </td>
+                  <td className={CELL}>
+                    <EditableCell value={String(row.quantity ?? '')} type="number" align="right" status={st(row.id, 'quantity')} onCommit={(v) => commitField(row, 'quantity', v)} />
                   </td>
                   <td className="border-r border-gray-100 px-3 py-1.5 text-sm text-gray-500 whitespace-nowrap">
                     {row.manufacturer?.name ?? '—'}
